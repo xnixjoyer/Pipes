@@ -74,7 +74,8 @@ Signals are recorded by `TerminalSession` and converted to `128 + signal`.
 
 ## Entry point
 
-`main(argv=None)` parses before preflight. Help, version, and self-test return
+The installed executable is `pipes`; the importable implementation remains
+`pipes_sh.py`. `main(argv=None)` parses before preflight. Help, version, and self-test return
 without TTY or terminfo. Interactive execution then performs preflight, loads
 terminfo, validates color bounds, creates components, and runs inside a context
 manager. Importing the module performs no terminal initialization.

@@ -1,7 +1,7 @@
 Name:           pipes-sh-python
-Version:        2.0.0
+Version:        3.0.0
 Release:        1%{?dist}
-Summary:        Unofficial Python rewrite of the pipes.sh terminal screensaver
+Summary:        Pipes terminal screensaver, independently rewritten in Python
 License:        MIT
 URL:            https://github.com/xnixjoyer/Pipes
 Source0:        %{url}/archive/refs/tags/v%{version}.tar.gz
@@ -10,12 +10,11 @@ BuildArch:      noarch
 BuildRequires:  python3-devel
 BuildRequires:  pyproject-rpm-macros
 Requires:       ncurses-base
-Provides:       pipes.sh = %{version}-%{release}
-Conflicts:      pipes-sh
+Provides:       pipes = %{version}-%{release}
 
 %description
 An unofficial, independently maintained Python rewrite of the classic pipes.sh
-terminal screensaver. The public command remains pipes.sh for compatibility.
+terminal screensaver. The installed public command is pipes; no pipes.sh alias is shipped.
 
 %prep
 %autosetup -n Pipes-%{version}
@@ -38,9 +37,9 @@ terminal screensaver. The public command remains pipes.sh for compatibility.
 
 %files -f %{pyproject_files}
 %license LICENSE
-%{_bindir}/pipes.sh
-%{_mandir}/man6/pipes.sh.6*
+%{_bindir}/pipes
+%{_mandir}/man6/pipes.6*
 
 %changelog
-* Tue Jul 21 2026 xnixjoyer <Error5634@proton.me> - 2.0.0-1
-- Initial package for the independent Python rewrite
+* Tue Jul 21 2026 xnixjoyer <Error5634@proton.me> - 3.0.0-1
+- Rename the installed command to pipes and add the pipes(6) manual

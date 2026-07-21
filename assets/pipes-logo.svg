@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-labelledby="title desc">
+  <title id="title">Pipes terminal screensaver logo</title>
+  <desc id="desc">A dark rounded terminal card with colorful interlocking pipes and the word PIPES.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#facc15"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="12" y="12" width="936" height="276" rx="38" fill="url(#panel)" stroke="#30363d" stroke-width="2"/>
+  <circle cx="58" cy="50" r="7" fill="#ff5f56"/>
+  <circle cx="82" cy="50" r="7" fill="#ffbd2e"/>
+  <circle cx="106" cy="50" r="7" fill="#27c93f"/>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="18" filter="url(#glow)">
+    <path d="M112 205V130c0-30 20-50 50-50h52" stroke="url(#cyan)"/>
+    <path d="M112 205h72c30 0 50-20 50-50v-24" stroke="url(#violet)"/>
+    <path d="M848 95v74c0 30-20 50-50 50h-54" stroke="url(#amber)"/>
+    <path d="M848 95h-72c-30 0-50 20-50 50v24" stroke="url(#cyan)"/>
+  </g>
+
+  <g fill="none" stroke="#8b949e" stroke-width="3" opacity=".28">
+    <path d="M266 82h428"/>
+    <path d="M266 226h428"/>
+  </g>
+
+  <text x="480" y="185" text-anchor="middle" fill="#f0f6fc"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+        font-size="104" font-weight="800" letter-spacing="14">PIPES</text>
+  <text x="480" y="232" text-anchor="middle" fill="#8b949e"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+        font-size="20" letter-spacing="4">TERMINAL SCREENSAVER · PYTHON</text>
+</svg>

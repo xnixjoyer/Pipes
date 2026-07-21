@@ -2,7 +2,7 @@ name: Nix
 
 on:
   push:
-    branches: [main, rewrite/python-single-file]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -33,9 +33,14 @@ jobs:
         run: |
           nix flake check --no-write-lock-file --print-build-logs
           nix build .#default --no-write-lock-file --print-build-logs
-          ./result/bin/pipes.sh --help >/dev/null
-          test "$(./result/bin/pipes.sh --version)" = "pipes.sh 2.0.0"
-          ./result/bin/pipes.sh --self-test
+          test -x ./result/bin/pipes
+          test ! -e ./result/bin/pipes.sh
+          test -f ./result/share/man/man6/pipes.6 || test -f ./result/share/man/man6/pipes.6.gz
+          test ! -e ./result/share/man/man6/pipes.sh.6
+          test ! -e ./result/share/man/man6/pipes.sh.6.gz
+          ./result/bin/pipes --help >/dev/null
+          test "$(./result/bin/pipes --version)" = "pipes 3.0.0"
+          ./result/bin/pipes --self-test
           nix run .#default --no-write-lock-file -- --self-test
 
       - name: Exact commit remote checks
@@ -47,7 +52,9 @@ jobs:
           export HOME="$RUNNER_TEMP/profile-home"
           mkdir -p "$HOME"
           nix profile add "$FLAKE#default"
-          "$HOME/.nix-profile/bin/pipes.sh" --self-test
+          test -x "$HOME/.nix-profile/bin/pipes"
+          test ! -e "$HOME/.nix-profile/bin/pipes.sh"
+          "$HOME/.nix-profile/bin/pipes" --self-test
 
       - name: Upload Nix log on failure
         if: failure()

@@ -32,7 +32,7 @@ Repository = "https://github.com/xnixjoyer/Pipes"
 Original = "https://github.com/pipeseroni/pipes.sh"
 
 [project.scripts]
-"pipes.sh" = "pipes_sh:main"
+pipes = "pipes_sh:main"
 
 [tool.setuptools]
 py-modules = ["pipes_sh"]
@@ -41,7 +41,7 @@ py-modules = ["pipes_sh"]
 version = { attr = "pipes_sh.VERSION" }
 
 [tool.setuptools.data-files]
-"share/man/man6" = ["pipes.sh.6"]
+"share/man/man6" = ["pipes.6"]
 
 [tool.ruff]
 target-version = "py310"

@@ -18,17 +18,17 @@ terminal policy in terminfo and avoids claiming universal direct-color support.
 
 - Distribution and distro packages: `pipes-sh-python`
 - Module and physical runtime: `pipes_sh` / `pipes_sh.py`
-- Public command: `pipes.sh`
+- Public command: `pipes` (no `pipes.sh` alias)
 - Nix package attribute: `"pipes-sh-python"`
 
 The public command preserves user compatibility. Package conflicts are explicit
 because two packages cannot own the same executable path.
 
-## D-004 — Version 2.0.0
+## D-004 — Version 3.0.0
 
-The rewrite starts at 2.0.0 due to language/runtime replacement, packaging
-change, terminal implementation change, deterministic model API, and deliberate
-legacy corrections. `pipes_sh.VERSION` is canonical.
+Version 3.0.0 makes the public command unambiguously `pipes` and removes the
+previous `pipes.sh` executable alias. This is a deliberate breaking CLI change.
+The module and distribution names remain stable; `pipes_sh.VERSION` is canonical.
 
 ## D-005 — Signal exit codes
 
@@ -77,3 +77,10 @@ Historical SHA is backed up before changes. Rewrite targets `main` through a PR.
 No branch is deleted automatically. Annotated tag creation and default-branch
 switch require a capability not exposed by the current connector and therefore
 must remain visibly incomplete until performed and verified.
+
+
+## D-013 — One public executable
+
+Only `/bin/pipes` is installed. Historical documentation may name the original
+project `pipes.sh`, but packaging, help, errors, version output, tests, and the
+man page use `pipes`. No compatibility symlink or wrapper is shipped.

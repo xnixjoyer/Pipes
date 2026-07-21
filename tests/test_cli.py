@@ -29,6 +29,11 @@ class CLITests(unittest.TestCase):
         self.assertEqual(pipes_sh.parse_options(["--version"])[1], "version")
         self.assertEqual(pipes_sh.parse_options(["--self-test"])[1], "self-test")
 
+    def test_public_command_name(self):
+        self.assertEqual(pipes_sh.build_parser().prog, "pipes")
+        self.assertTrue(pipes_sh.help_text().startswith("usage: pipes [OPTION]..."))
+
+
 
 if __name__ == "__main__":
     unittest.main()

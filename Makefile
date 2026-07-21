@@ -12,7 +12,7 @@ build:
 	$(PYTHON) -m build --wheel --no-isolation
 
 man:
-	groff -man -Tutf8 pipes.sh.6 >/dev/null
+	groff -man -Tutf8 pipes.6 >/dev/null
 
 clean:
 	rm -rf build dist *.egg-info __pycache__ tests/__pycache__

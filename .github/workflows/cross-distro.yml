@@ -2,7 +2,7 @@ name: Cross distribution
 
 on:
   push:
-    branches: [main, rewrite/python-single-file]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -32,6 +32,7 @@ jobs:
           python -m unittest discover -s tests -v
           python pipes_sh.py --self-test
           python -O pipes_sh.py --self-test
+          test "$(python pipes_sh.py --version)" = "pipes 3.0.0"
       - name: Build and inspect wheel
         run: |
           python -m build --wheel --no-isolation
@@ -42,16 +43,19 @@ jobs:
           with zipfile.ZipFile(wheel) as archive:
               names = set(archive.namelist())
           assert any(name.endswith('/pipes_sh.py') or name == 'pipes_sh.py' for name in names), names
-          assert any(name.endswith('.data/data/share/man/man6/pipes.sh.6') for name in names), names
+          assert any(name.endswith('.data/data/share/man/man6/pipes.6') for name in names), names
+          assert not any(name.endswith('.data/data/share/man/man6/pipes.sh.6') for name in names), names
           assert not any('.git/' in name or '__pycache__/' in name for name in names), names
           print(wheel)
           PY
           python -m venv "$RUNNER_TEMP/wheel-venv"
           "$RUNNER_TEMP/wheel-venv/bin/python" -m pip install --no-index dist/*.whl
-          "$RUNNER_TEMP/wheel-venv/bin/pipes.sh" --help >/dev/null
-          test "$("$RUNNER_TEMP/wheel-venv/bin/pipes.sh" --version)" = "pipes.sh 2.0.0"
-          "$RUNNER_TEMP/wheel-venv/bin/pipes.sh" --self-test
-          "$RUNNER_TEMP/wheel-venv/bin/python" -c 'import pipes_sh; assert pipes_sh.VERSION == "2.0.0"'
+          test -x "$RUNNER_TEMP/wheel-venv/bin/pipes"
+          test ! -e "$RUNNER_TEMP/wheel-venv/bin/pipes.sh"
+          "$RUNNER_TEMP/wheel-venv/bin/pipes" --help >/dev/null
+          test "$("$RUNNER_TEMP/wheel-venv/bin/pipes" --version)" = "pipes 3.0.0"
+          "$RUNNER_TEMP/wheel-venv/bin/pipes" --self-test
+          "$RUNNER_TEMP/wheel-venv/bin/python" -c 'import pipes_sh; assert pipes_sh.VERSION == "3.0.0"'
 
   nix-gate:
     runs-on: ubuntu-latest
@@ -76,9 +80,9 @@ jobs:
           useradd -m builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
           cd "$GITHUB_WORKSPACE"
-          tar --exclude=.git --transform='s,^,Pipes-2.0.0/,' -czf /tmp/pipes-sh-python-2.0.0.tar.gz .
-          mv /tmp/pipes-sh-python-2.0.0.tar.gz packaging/arch/
-          chown builder:builder packaging/arch/pipes-sh-python-2.0.0.tar.gz
+          tar --exclude=.git --transform='s,^,Pipes-3.0.0/,' -czf /tmp/pipes-sh-python-3.0.0.tar.gz .
+          mv /tmp/pipes-sh-python-3.0.0.tar.gz packaging/arch/
+          chown builder:builder packaging/arch/pipes-sh-python-3.0.0.tar.gz
       - name: Build as non-root
         run: |
           su builder -c "cd '$GITHUB_WORKSPACE/packaging/arch' && SRCDEST=\$PWD makepkg --cleanbuild --noconfirm"
@@ -88,14 +92,17 @@ jobs:
           pkg=$(find . -maxdepth 1 -name 'pipes-sh-python-*.pkg.tar.zst' -print -quit)
           test -n "$pkg"
           pacman -Qlp "$pkg" | tee package-contents.txt
-          grep -q '/usr/bin/pipes.sh$' package-contents.txt
-          grep -q '/usr/share/man/man6/pipes.sh.6' package-contents.txt
+          grep -q '/usr/bin/pipes$' package-contents.txt
+          grep -q '/usr/share/man/man6/pipes.6' package-contents.txt
+          ! grep -q '/usr/bin/pipes.sh$' package-contents.txt
+          ! grep -q '/usr/share/man/man6/pipes.sh.6' package-contents.txt
           ! grep -Eq '/(\.git|dist|build|__pycache__|\.whl)(/|$)' package-contents.txt
           pacman -U --noconfirm "$pkg"
-          pipes.sh --help >/dev/null
-          test "$(pipes.sh --version)" = "pipes.sh 2.0.0"
-          pipes.sh --self-test
-          python -c 'import pipes_sh; assert pipes_sh.VERSION == "2.0.0"'
+          pipes --help >/dev/null
+          test "$(pipes --version)" = "pipes 3.0.0"
+          pipes --self-test
+          ! command -v pipes.sh
+          python -c 'import pipes_sh; assert pipes_sh.VERSION == "3.0.0"'
 
   fedora-rpm:
     needs: [python-wheel, nix-gate, arch-package]
@@ -109,7 +116,7 @@ jobs:
       - name: Build source archive and RPM
         run: |
           mkdir -p "$HOME/rpmbuild"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-          tar --exclude=.git --transform='s,^,Pipes-2.0.0/,' -czf "$HOME/rpmbuild/SOURCES/v2.0.0.tar.gz" .
+          tar --exclude=.git --transform='s,^,Pipes-3.0.0/,' -czf "$HOME/rpmbuild/SOURCES/v3.0.0.tar.gz" .
           cp packaging/fedora/pipes-sh-python.spec "$HOME/rpmbuild/SPECS/"
           rpmbuild -ba "$HOME/rpmbuild/SPECS/pipes-sh-python.spec"
       - name: Inspect and install RPM
@@ -117,11 +124,14 @@ jobs:
           rpmfile=$(find "$HOME/rpmbuild/RPMS" -name 'pipes-sh-python-*.rpm' -print -quit)
           test -n "$rpmfile"
           rpm -qlp "$rpmfile" | tee package-contents.txt
-          grep -q '/usr/bin/pipes.sh$' package-contents.txt
-          grep -q '/usr/share/man/man6/pipes.sh.6' package-contents.txt
+          grep -q '/usr/bin/pipes$' package-contents.txt
+          grep -q '/usr/share/man/man6/pipes.6' package-contents.txt
+          ! grep -q '/usr/bin/pipes.sh$' package-contents.txt
+          ! grep -q '/usr/share/man/man6/pipes.sh.6' package-contents.txt
           ! grep -Eq '/(\.git|dist|build|__pycache__|\.whl)(/|$)' package-contents.txt
           dnf -y install "$rpmfile"
-          pipes.sh --help >/dev/null
-          test "$(pipes.sh --version)" = "pipes.sh 2.0.0"
-          pipes.sh --self-test
-          python3 -c 'import pipes_sh; assert pipes_sh.VERSION == "2.0.0"'
+          pipes --help >/dev/null
+          test "$(pipes --version)" = "pipes 3.0.0"
+          pipes --self-test
+          ! command -v pipes.sh
+          python3 -c 'import pipes_sh; assert pipes_sh.VERSION == "3.0.0"'
