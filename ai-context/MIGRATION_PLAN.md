@@ -9,7 +9,7 @@ required external verification, `[ ]` not completed.
 - [x] Record historical SHA `581792d4e0ea51e15889ba14a85db1bc9727b83d`.
 - [x] Verify historical MIT notices in runtime and `LICENSE`.
 - [x] Create `backup/master-before-python-rewrite-20260721` at historical SHA.
-- [x] Create `main` at historical SHA.
+- [x] Create `main` at historical SHA before implementation.
 - [x] Create `rewrite/python-single-file` at historical SHA.
 - [x] Create annotated tag `pre-python-master-20260721` and verify that it is
   commit-identical to historical `master`.
@@ -36,15 +36,34 @@ required external verification, `[ ]` not completed.
 ## GitHub integration
 
 - [x] Push all verified files to `rewrite/python-single-file`.
-- [x] Open draft PR #1 to `main` with test and rollback report.
-- [x] Successful Python, PTY, Wheel, Nix, Arch, and Fedora CI on executable head
-  `155e311fa38791f033984ef622b1ef7902c4c1ec`.
-- [~] Re-run CI on the final status-only documentation head.
-- [ ] Mark PR ready and merge after that final check.
-- [ ] Confirm merged `main` SHA and push-CI.
-- [ ] Change repository default branch to `main` in GitHub settings.
-- [ ] Verify remote default flake after the default-branch change.
-- [ ] Mark `rewrite/python-single-file` deletable; do not delete automatically.
+- [x] Open PR #1 to `main` with test and rollback report.
+- [x] Successful final-head Python, PTY, Wheel, Nix, Arch, and Fedora CI:
+  Nix run `29859100015`; cross-distribution run `29859100058`.
+- [x] Mark PR #1 ready and squash-merge it.
+- [x] Confirm merged `main` SHA
+  `41b3cb359bf0cb46587e4f8326509833bf6037f9`.
+- [~] Validate the merged Main tree again through PR #2 from
+  `validation/main-post-merge`; this PR changes only maintainer status records.
+- [ ] Change the repository default branch from `master` to `main` in GitHub
+  Settings. The connected GitHub tool exposes no repository-default-branch
+  mutation, so this remains a manual administration step.
+- [ ] After that switch, verify unqualified `github:xnixjoyer/Pipes` resolves to
+  `main` and run the default-branch Nix build/run/profile smoke tests.
+- [ ] Mark `rewrite/python-single-file` and `validation/main-post-merge`
+  deletable after default-branch verification; do not delete them automatically.
+
+## Current branch retention
+
+Keep:
+
+- `main`
+- `master` until explicit owner approval for deletion
+- `backup/master-before-python-rewrite-20260721`
+- annotated tag `pre-python-master-20260721`
+
+Temporary branches may be deleted only after the GitHub default branch is
+confirmed as `main`, main validation is green, and unqualified remote installs
+resolve to the Python rewrite.
 
 ## Failure handling
 
