@@ -60,7 +60,7 @@ process is multi-threaded. Those warnings do not affect the test result.
 
 ### PR #1
 
-Final accepted head: `408b56006710f6ceec785aa1fcfba7d152fcc262`
+Final accepted head: `408b56006710f6ceec785aa1fcfba7d152fcc262`.
 
 - Nix run `29859100015`: successful formatting, flake check, build, local run,
   exact-commit remote build/run, profile installation, help/version/self-test.
@@ -83,10 +83,11 @@ PR #2 was squash-merged as
 
 ## Version 3.0.0 command migration acceptance
 
-Final executable/package head:
-`0eee308fa3e4332ccfe0d8af86944cf48196bf94`.
+### Executable/package head
 
-### Nix run `29861774386`
+Accepted head: `0eee308fa3e4332ccfe0d8af86944cf48196bf94`.
+
+#### Nix run `29861774386`
 
 Conclusion: success.
 
@@ -112,7 +113,7 @@ the workflow checked only the uncompressed manpage path. Nix compressed the file
 to `pipes.6.gz`; the package and workflow were corrected to accept either valid
 Nix form while still rejecting both old `pipes.sh.6` forms.
 
-### Cross-distribution run `29861774406`
+#### Cross-distribution run `29861774406`
 
 Conclusion: success for every job.
 
@@ -149,6 +150,29 @@ Fedora 44 verified:
 - installed help, exact version, self-test, and import
 
 The same run also completed the Nix gate successfully.
+
+### Final PR head
+
+Final PR head: `c711353271acc55d4013a714858924865a503233`.
+
+- Nix run `29862006643`: success for formatting, build, local run,
+  exact-commit remote build/run, profile installation, command/manpage presence,
+  and old-interface absence.
+- Cross-distribution run `29862006732`: success for Python 3.10, Python 3.13,
+  Ruff, all 31 tests, Wheel, Nix gate, unprivileged Arch, and Fedora 44.
+
+PR #3 was marked ready and squash-merged into `main` as
+`2559806a186bff29688d1c65e29df8800e26ee74`.
+
+Direct post-merge GitHub reads at `ref=main` confirmed:
+
+- `pyproject.toml` exposes only `pipes = "pipes_sh:main"`;
+- package data names `pipes.6`;
+- README displays `assets/pipes-logo.svg` centered and documents `$ pipes`;
+- README explicitly states no `pipes.sh` executable alias is installed;
+- `pipes(6)` exists and declares version 3.0.0;
+- `pipes.sh.6` returns Not Found;
+- repository metadata reports `main` as the default branch.
 
 ## Migration-workflow failure history
 
@@ -189,9 +213,8 @@ the transformed runtime and tests before committing them.
 - Version 3 packaging intentionally installs only `pipes`; historical `pipes.sh`
   references remain only where they identify or credit the original project.
 
-## Current status-only check
+## Remaining optional verification
 
-The documentation commit following runs `29861774386` and `29861774406` changes
-only canonical hand-off records. PR checks must be green before PR #3 is marked
-ready or merged. After merge, run the unqualified remote Nix smoke tests listed
-in `MIGRATION_PLAN.md` and record the merged Main SHA.
+Run the unqualified remote Nix smoke commands listed in `MIGRATION_PLAN.md` and
+record their result. All required PR acceptance and direct Main-tree checks have
+already passed.
