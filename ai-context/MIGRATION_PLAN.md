@@ -13,8 +13,10 @@ required external verification, `[ ]` not completed.
 - [x] Create `rewrite/python-single-file` at historical SHA.
 - [x] Create annotated tag `pre-python-master-20260721` and verify that it is
   commit-identical to historical `master`.
+- [x] Change the GitHub repository default branch to `main` and verify the
+  repository metadata reports `main`.
 
-## Rewrite
+## Python rewrite
 
 - [x] Single-file Python runtime.
 - [x] Pure CLI/model functions and deterministic engine.
@@ -22,77 +24,76 @@ required external verification, `[ ]` not completed.
 - [x] Immediate bold/color toggles and documented legacy corrections.
 - [x] Unit/model/self/PTY tests, including exact termios restoration.
 - [x] README, manpage, and canonical AI context.
-
-## Packaging
-
-- [x] `pyproject.toml` and console entry point.
-- [x] Wheel build/install/content inspection on Python 3.10 and 3.13.
-- [x] Nix flake, lock, derivation, checks, build, run, exact-commit remote tests,
-  and profile installation.
-- [x] Arch unprivileged build, content inspection, installation, and self-test.
-- [x] Fedora RPM build, content inspection, installation, and self-test.
-- [x] GitHub Actions definitions.
-
-## GitHub integration
-
-- [x] Push all verified files to `rewrite/python-single-file`.
-- [x] Open, validate, and squash-merge PR #1 to `main`.
-- [x] Confirm rewrite merge SHA
+- [x] Python Wheel, Nix, Arch, and Fedora packaging.
+- [x] Merge rewrite PR #1 to `main` as
   `41b3cb359bf0cb46587e4f8326509833bf6037f9`.
-- [x] Validate the merged Main tree again through PR #2 from
-  `validation/main-post-merge`.
-- [x] Post-merge validation Nix run `29859471948`: success, including exact
-  remote commit build/run and profile installation.
-- [x] Post-merge cross-distribution run `29859471853`: success for Python 3.10,
-  Python 3.13, 30 tests, wheel, Nix gate, unprivileged Arch, and Fedora 44.
-- [x] Squash-merge PR #2 as
+- [x] Revalidate the merged Main tree through PR #2 and merge the hand-off as
   `2fad92a831ef167b38a77124f10723b31d027a8f`.
-- [x] Update README and canonical status records so remote examples explicitly
-  target `/main` during the default-branch transition.
-- [ ] Change the repository default branch from `master` to `main` in GitHub
-  Settings. The connected GitHub tool exposes no repository-default-branch
-  mutation, so this remains a manual administration step.
-- [ ] After that switch, verify unqualified `github:xnixjoyer/Pipes` resolves to
-  `main` and run the default-branch Nix build/run/profile smoke tests.
-- [ ] Mark `rewrite/python-single-file` and `validation/main-post-merge`
-  deletable after default-branch verification; do not delete them automatically.
+
+## Public command migration — version 3.0.0
+
+The public interface intentionally changes from `pipes.sh` to `pipes`. The
+original project name remains in historical credits, but no installed alias,
+wrapper, symlink, package file, or manpage uses the old executable name.
+
+- [x] Set `pipes` as the only console-script entry point.
+- [x] Change help, errors, version output, and self-test output to `pipes`.
+- [x] Bump the rewrite version to 3.0.0 because this is a breaking CLI change.
+- [x] Rename the manual page from `pipes.sh(6)` to `pipes(6)`.
+- [x] Update Wheel, Nix, Arch, Fedora, Makefile, flake app, and package metadata.
+- [x] Update durable CI and add negative checks for `/bin/pipes.sh` and
+  `pipes.sh.6`.
+- [x] Add a centered custom SVG logo and redesign the README.
+- [x] Add a parser/help regression test for the public command name.
+- [x] Run the complete Python 3.10/3.13, Wheel, PTY/model, Nix, Arch, and Fedora
+  matrix on final executable head `0eee308fa3e4332ccfe0d8af86944cf48196bf94`.
+- [x] Nix run `29861774386`: success, including local build/run, exact-commit
+  remote build/run, profile installation, `pipes` presence, and `pipes.sh`
+  absence.
+- [x] Cross-distribution run `29861774406`: success for Python 3.10, Python 3.13,
+  31 tests, Wheel, Nix gate, unprivileged Arch, and Fedora 44.
+- [~] Update this status-only documentation head and let PR checks confirm the
+  docs did not disturb the accepted tree.
+- [ ] Mark PR #3 ready and squash-merge it to `main` after the status-only checks.
+- [ ] Confirm the merged Main SHA and verify `pipes --version` through an
+  unqualified `github:xnixjoyer/Pipes` Nix reference.
 
 ## Current acceptance boundary
 
-The implementation, tests, packaging, license preservation, explicit-`main`
-remote references, and maintainer context are complete on `main`. The project is
-not yet allowed to claim that its GitHub migration is fully complete because the
-repository setting still names `master` as the default branch.
+Runtime, packaging, durable workflows, and executable tests are accepted on the
+feature branch. The only remaining work is the status-only documentation check,
+PR #3 merge, and post-merge unqualified remote smoke test.
 
-Until that setting changes:
-
-- use `github:xnixjoyer/Pipes/main` for Nix remote references;
-- do not use unqualified `github:xnixjoyer/Pipes` as proof of the Python rewrite;
-- do not delete `master`, the backup branch, or the annotated rollback tag.
-
-After an administrator selects `main` under **Settings → General → Default
-branch**, run and record:
+Expected post-merge commands:
 
 ```bash
 nix flake metadata github:xnixjoyer/Pipes
 nix build github:xnixjoyer/Pipes#default
 nix run github:xnixjoyer/Pipes#default -- --self-test
 nix profile add github:xnixjoyer/Pipes#default
-"$HOME/.nix-profile/bin/pipes.sh" --self-test
+"$HOME/.nix-profile/bin/pipes" --version
+"$HOME/.nix-profile/bin/pipes" --self-test
 ```
+
+The expected version output is:
+
+```text
+pipes 3.0.0
+```
+
+The profile must not contain `$HOME/.nix-profile/bin/pipes.sh`.
 
 ## Branch retention
 
-Keep:
+Keep permanently unless the owner explicitly decides otherwise:
 
 - `main`
-- `master` until explicit owner approval for deletion
+- historical `master`
 - `backup/master-before-python-rewrite-20260721`
 - annotated tag `pre-python-master-20260721`
 
-Temporary branches may be deleted only after the GitHub default branch is
-confirmed as `main`, Main validation remains green, and unqualified remote
-installs resolve to the Python rewrite.
+Temporary implementation branches may be deleted only after their merged Main
+commit and remote installation are independently verified.
 
 ## Failure handling
 
@@ -100,15 +101,3 @@ When CI fails, add the exact job/run, failing command, relevant log excerpt, roo
 cause, and correction to `TESTING.md`. Do not weaken a check merely to obtain a
 green result. Packaging failures must be fixed in their native packaging files,
 not hidden by installing into uncontrolled environments.
-
-
-## Public command migration — version 3.0.0
-
-- [x] Select `pipes` as the only installed executable name.
-- [x] Remove the `pipes.sh` console-script entry point and package file ownership.
-- [x] Rename the manual page to `pipes(6)`.
-- [x] Update Nix, Wheel, Arch, Fedora, help, errors, version output, and docs.
-- [x] Add centered custom SVG branding to the README.
-- [~] Update permanent CI workflows through the GitHub connector.
-- [~] Validate the complete 3.0.0 matrix in the feature pull request.
-- [ ] Merge only after Python 3.10/3.13, Wheel, Nix, Arch, Fedora, and PTY checks pass.
