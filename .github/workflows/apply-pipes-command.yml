@@ -3,6 +3,9 @@ name: Apply pipes command migration
 on:
   push:
     branches: [feature/pipes-command-logo-readme]
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
