@@ -1,0 +1,127 @@
+name: Cross distribution
+
+on:
+  push:
+    branches: [main, rewrite/python-single-file]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install build tools
+        run: python -m pip install --disable-pip-version-check build installer ruff setuptools wheel
+      - name: Static and model checks
+        run: |
+          ruff check .
+          python -m compileall -q pipes_sh.py tests
+          python -m unittest discover -s tests -v
+          python pipes_sh.py --self-test
+          python -O pipes_sh.py --self-test
+      - name: Build and inspect wheel
+        run: |
+          python -m build --wheel --no-isolation
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          wheel = next(Path('dist').glob('*.whl'))
+          with zipfile.ZipFile(wheel) as archive:
+              names = set(archive.namelist())
+          assert any(name.endswith('/pipes_sh.py') or name == 'pipes_sh.py' for name in names), names
+          assert any(name.endswith('.data/data/share/man/man6/pipes.sh.6') for name in names), names
+          assert not any('.git/' in name or '__pycache__/' in name for name in names), names
+          print(wheel)
+          PY
+          python -m venv "$RUNNER_TEMP/wheel-venv"
+          "$RUNNER_TEMP/wheel-venv/bin/python" -m pip install --no-index dist/*.whl
+          "$RUNNER_TEMP/wheel-venv/bin/pipes.sh" --help >/dev/null
+          test "$("$RUNNER_TEMP/wheel-venv/bin/pipes.sh" --version)" = "pipes.sh 2.0.0"
+          "$RUNNER_TEMP/wheel-venv/bin/pipes.sh" --self-test
+          "$RUNNER_TEMP/wheel-venv/bin/python" -c 'import pipes_sh; assert pipes_sh.VERSION == "2.0.0"'
+
+  nix-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix flake check --no-write-lock-file --print-build-logs
+
+  arch-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container: archlinux:latest
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm base-devel git python python-build python-installer python-setuptools python-wheel ncurses sudo
+      - uses: actions/checkout@v4
+      - name: Prepare unprivileged source build
+        run: |
+          useradd -m builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          tar --exclude=.git --transform='s,^,Pipes-2.0.0/,' -czf /tmp/pipes-sh-python-2.0.0.tar.gz .
+          mv /tmp/pipes-sh-python-2.0.0.tar.gz packaging/arch/
+          chown builder:builder packaging/arch/pipes-sh-python-2.0.0.tar.gz
+      - name: Build as non-root
+        run: |
+          su builder -c "cd '$GITHUB_WORKSPACE/packaging/arch' && SRCDEST=\$PWD makepkg --cleanbuild --noconfirm"
+      - name: Inspect and install
+        run: |
+          cd packaging/arch
+          pkg=$(find . -maxdepth 1 -name 'pipes-sh-python-*.pkg.tar.zst' -print -quit)
+          test -n "$pkg"
+          pacman -Qlp "$pkg" | tee package-contents.txt
+          grep -q '/usr/bin/pipes.sh$' package-contents.txt
+          grep -q '/usr/share/man/man6/pipes.sh.6' package-contents.txt
+          ! grep -Eq '/(\.git|dist|build|__pycache__|\.whl)(/|$)' package-contents.txt
+          pacman -U --noconfirm "$pkg"
+          pipes.sh --help >/dev/null
+          test "$(pipes.sh --version)" = "pipes.sh 2.0.0"
+          pipes.sh --self-test
+          python -c 'import pipes_sh; assert pipes_sh.VERSION == "2.0.0"'
+
+  fedora-rpm:
+    needs: [python-wheel, nix-gate, arch-package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container: fedora:latest
+    steps:
+      - name: Install tools
+        run: dnf -y install git rpm-build python3-devel pyproject-rpm-macros python3-setuptools python3-wheel ncurses-base
+      - uses: actions/checkout@v4
+      - name: Build source archive and RPM
+        run: |
+          mkdir -p "$HOME/rpmbuild"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          tar --exclude=.git --transform='s,^,Pipes-2.0.0/,' -czf "$HOME/rpmbuild/SOURCES/v2.0.0.tar.gz" .
+          cp packaging/fedora/pipes-sh-python.spec "$HOME/rpmbuild/SPECS/"
+          rpmbuild -ba "$HOME/rpmbuild/SPECS/pipes-sh-python.spec"
+      - name: Inspect and install RPM
+        run: |
+          rpmfile=$(find "$HOME/rpmbuild/RPMS" -name 'pipes-sh-python-*.rpm' -print -quit)
+          test -n "$rpmfile"
+          rpm -qlp "$rpmfile" | tee package-contents.txt
+          grep -q '/usr/bin/pipes.sh$' package-contents.txt
+          grep -q '/usr/share/man/man6/pipes.sh.6' package-contents.txt
+          ! grep -Eq '/(\.git|dist|build|__pycache__|\.whl)(/|$)' package-contents.txt
+          dnf -y install "$rpmfile"
+          pipes.sh --help >/dev/null
+          test "$(pipes.sh --version)" = "pipes.sh 2.0.0"
+          pipes.sh --self-test
+          python3 -c 'import pipes_sh; assert pipes_sh.VERSION == "2.0.0"'

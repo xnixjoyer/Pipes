@@ -1,0 +1,33 @@
+# Maintainer: xnixjoyer
+pkgname=pipes-sh-python
+pkgver=2.0.0
+pkgrel=1
+pkgdesc='Unofficial Python rewrite of the pipes.sh terminal screensaver'
+arch=('any')
+url='https://github.com/xnixjoyer/Pipes'
+license=('MIT')
+depends=('python' 'ncurses')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+provides=('pipes.sh')
+conflicts=('pipes.sh')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/xnixjoyer/Pipes/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "Pipes-$pkgver"
+  python -m build --wheel --no-isolation
+}
+
+check() {
+  cd "Pipes-$pkgver"
+  python -m compileall -q pipes_sh.py tests
+  python -m unittest discover -s tests -v
+  python pipes_sh.py --self-test
+  python -O pipes_sh.py --self-test
+}
+
+package() {
+  cd "Pipes-$pkgver"
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

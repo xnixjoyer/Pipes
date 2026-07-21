@@ -1,1 +1,9 @@
 pipes.sh.6.html
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+result
+packaging/arch/*.pkg.tar.*
+packaging/arch/*.tar.gz

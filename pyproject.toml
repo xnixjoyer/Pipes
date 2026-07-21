@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pipes-sh-python"
+dynamic = ["version"]
+description = "Unofficial Python rewrite of the pipes.sh terminal screensaver"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+license = { file = "LICENSE" }
+authors = [
+  { name = "Pipeseroni/pipes.sh contributors" },
+  { name = "xnixjoyer" },
+]
+keywords = ["terminal", "screensaver", "ansi", "terminfo", "pipes"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Repository = "https://github.com/xnixjoyer/Pipes"
+Original = "https://github.com/pipeseroni/pipes.sh"
+
+[project.scripts]
+"pipes.sh" = "pipes_sh:main"
+
+[tool.setuptools]
+py-modules = ["pipes_sh"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pipes_sh.VERSION" }
+
+[tool.setuptools.data-files]
+"share/man/man6" = ["pipes.sh.6"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
