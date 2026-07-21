@@ -111,6 +111,38 @@ class IntegrationTests(unittest.TestCase):
                     os.close(fd)
 
     @unittest.skipUnless(os.name == "posix", "PTY requires POSIX")
+    def test_termios_and_echo_restored(self):
+        import termios
+
+        master, slave = pty.openpty()
+        before = termios.tcgetattr(slave)
+        pid = os.fork()
+        if pid == 0:
+            try:
+                os.close(master)
+                os.dup2(slave, 0)
+                os.dup2(slave, 1)
+                os.dup2(slave, 2)
+                if slave > 2:
+                    os.close(slave)
+                env = os.environ.copy()
+                env["TERM"] = "xterm-256color"
+                os.execve(sys.executable, [sys.executable, str(SCRIPT), "--seed", "1", "-C"], env)
+            finally:
+                os._exit(127)
+        try:
+            initial = self._wait_started(master)
+            during = termios.tcgetattr(slave)
+            self.assertFalse(during[3] & termios.ECHO)
+            os.write(master, b"q")
+            self._collect(pid, master, 0, initial=initial)
+            after = termios.tcgetattr(slave)
+            self.assertEqual(after, before)
+        finally:
+            os.close(master)
+            os.close(slave)
+
+    @unittest.skipUnless(os.name == "posix", "PTY requires POSIX")
     def test_pty_resize(self):
         pid, fd = self._spawn_pty("-p", "8", "-C")
         try:
