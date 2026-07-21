@@ -1,0 +1,132 @@
+.\" Manpage for the Pipes Python rewrite
+.\" SPDX-License-Identifier: MIT
+.TH PIPES 6 "21 July 2026" "3.0.0" "Pipes manual"
+.SH NAME
+pipes \- animated terminal pipes screensaver
+.SH SYNOPSIS
+.B pipes
+.RI [ OPTION ]...
+.SH DESCRIPTION
+.B pipes
+renders randomly routed, colored pipes in a POSIX terminal.
+It is an unofficial, independently maintained Python rewrite of the classic
+.B pipes.sh
+screensaver.
+.PP
+The runtime uses terminfo capabilities and buffered terminal output directly.
+It starts no shell or helper process, performs no network access, and writes no
+persistent runtime files.
+.SH OPTIONS
+.TP
+.BI "-p " NUMBER
+Number of independent pipes. The value must be at least 1. Default: 1.
+.TP
+.BI "-t " TYPE
+Select a built-in pipe type from 0 through 9. May be repeated.
+.TP
+.BI "-t c" GLYPHS
+Define a custom type using exactly 16 printable, non-combining, single-cell
+Unicode codepoints. May be repeated.
+.TP
+.BI "-c " INDEX
+Select a decimal terminfo foreground-color index. May be repeated.
+.TP
+.BI "-c #" HEX
+Select a hexadecimal terminfo foreground-color index. May be repeated.
+.TP
+.BI "-f " FPS
+Frame rate from 20 through 100. Default: 75.
+.TP
+.BI "-s " DENOMINATOR
+Straight-movement probability denominator from 5 through 15. Default: 13.
+.TP
+.BI "-r " LIMIT
+Clear the screen after exactly LIMIT drawn glyphs. Zero disables automatic
+clearing. Default: 2000.
+.TP
+.B -R
+Randomize starting position and direction.
+.TP
+.B -B
+Disable bold rendering at startup.
+.TP
+.B -C
+Disable color rendering at startup.
+.TP
+.B -K
+Keep each pipe's type and color when crossing terminal edges.
+.TP
+.BR -h , " --help"
+Show help and exit.
+.TP
+.BR -v , " --version"
+Show version and exit.
+.TP
+.B --self-test
+Run deterministic, non-interactive integrity checks and exit.
+.TP
+.BI "--seed " INTEGER
+Use a deterministic random seed.
+.SH KEYBOARD CONTROLS
+.TP
+.B P / O
+Increase or decrease the straight-movement denominator.
+.TP
+.B F / D
+Increase or decrease the frame rate.
+.TP
+.B B
+Toggle bold immediately.
+.TP
+.B C
+Toggle color immediately.
+.TP
+.B K
+Toggle type/color retention at screen edges.
+.PP
+Any other key exits normally.
+.SH PIPE TYPES
+The ten built-in styles are heavy box, light arc, light square, double box,
+ASCII plus, ASCII slash, dots, dot/O, railway, and knobby box drawing.
+.PP
+Each type contains 16 transition glyphs indexed by
+.BR "old_direction * 4 + new_direction" .
+Directions are up, right, down, and left. Reverse turns are never generated.
+.SH COLORS
+Color indices are passed to the terminal's
+.B setaf
+terminfo capability. When terminfo reports no usable color capability,
+animation continues without color. Requested indices outside a positive
+terminal color limit are rejected before terminal state is changed.
+.SH TERMINAL BEHAVIOR
+Interactive mode requires a TTY, a usable
+.B TERM
+value, and a terminfo database. Help, version, and self-test do not require a
+TTY.
+.PP
+Normal exit, handled signals, and runtime errors restore saved terminal
+attributes, cursor visibility, alternate-screen state, and signal handlers.
+.SH FILES
+.TP
+.I pipes_sh.py
+Single-file Python runtime and importable module.
+.TP
+.I LICENSE
+Historical MIT license and copyright notices.
+.SH EXIT STATUS
+Zero indicates normal completion. Command-line or runtime errors return a
+non-zero status. Handled INT, TERM, and HUP signals return 128 plus the signal
+number after cleanup.
+.SH HISTORY
+Matthew Simpson created the original pipes program in 2010. Yu-Jie Lin later
+developed it, and the Pipeseroni collective maintained the Bash project after
+the MIT license was added.
+.PP
+This repository contains an unofficial Python rewrite independently maintained
+by xnixjoyer. It is not an official Pipeseroni release.
+.SH LICENSE
+MIT. See the LICENSE file. Historical notices must remain in copies or
+substantial portions of the software.
+.SH SEE ALSO
+.BR terminfo (5),
+.BR console_codes (4)
