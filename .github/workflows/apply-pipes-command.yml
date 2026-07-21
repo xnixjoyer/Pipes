@@ -155,7 +155,8 @@ jobs:
           test -f pipes.6
           test ! -e pipes.sh.6
           ! grep -R '/bin/pipes\.sh\|pipes\.sh --version\|pipes\.sh --self-test' \
-              pyproject.toml flake.nix nix packaging .github/workflows tests
+              pyproject.toml flake.nix nix packaging \
+              .github/workflows/cross-distro.yml .github/workflows/nix.yml tests
 
       - name: Commit migration
         run: |
