@@ -37,7 +37,7 @@ required external verification, `[ ]` not completed.
 
 ## GitHub integration
 
-- [ ] Push all verified files to `rewrite/python-single-file`.
+- [x] Push all locally verified files to `rewrite/python-single-file`.
 - [ ] Open PR to `main` with test and rollback report.
 - [ ] Require successful CI for Python, PTY, Nix, Arch, and Fedora.
 - [ ] Merge only after all required checks pass.
