@@ -27,15 +27,17 @@ Results:
 
 - Version output: `pipes.sh 2.0.0`
 - Self-test output: `pipes.sh self-test: PASS`
-- Unit/model/integration tests: 29 tests, all passed
+- Unit/model/integration tests: 30 tests, all passed
 - Exact reset boundaries: passed for one and multiple clear points inside a
   multi-pipe frame; renderer ordering is regression-tested
 - PTY: startup with `TERM=xterm-256color`, deterministic seed, ASCII type,
   no-color mode, normal key exit, `SIGINT`, `SIGTERM`, `SIGHUP`, and 1×1
   resize; passed with conventional signal exit codes, no traceback, and no zero
   cursor coordinates
-- Python emitted a `pty.fork` deprecation warning under Python 3.13 because the
-  host process is multi-threaded; it did not affect the result
+- OpenPTY restoration test: confirmed Echo is disabled while running and the
+  complete original `termios` attribute vector is restored after normal exit
+- Python emitted `pty.fork`/`os.fork` deprecation warnings under Python 3.13
+  because the host process is multi-threaded; they did not affect the result
 
 The test suite itself also executed and passed:
 
@@ -45,19 +47,30 @@ python3 -O pipes_sh.py --self-test
 
 through the integration test subprocess.
 
-## Not yet executed in the local environment
+## GitHub Actions results
 
-- Ruff
-- Wheel build, wheel content inspection, isolated wheel installation
-- Nix evaluation, formatting, flake check, package build, app run, profile add
-- Nix store immutability check
-- Arch `makepkg`, package listing, installation
-- Fedora `rpmbuild`, RPM listing, installation
-- Remote GitHub flake build/run/profile installation
-- Explicit termios before/after attribute comparison in PTY tests
+Successful on head `6297c16ab96cd6cc8a984f6097cf97270b4a9178` before the
+non-functional cache cleanup and termios-test addition:
 
-These are CI requirements, not optional omissions. Do not call packaging or the
-migration complete until actual successful commands are appended here.
+- Python 3.10 and 3.13: Ruff, compileall, 29 tests, normal/optimized self-test,
+  wheel build/content inspection, isolated install, command, version, import
+- Nix: formatting, flake check, build, local run, exact-commit remote build/run,
+  and profile installation
+- Arch: unprivileged `makepkg`, content inspection, installation, command,
+  version, self-test, import
+- Fedora 44: RPM build, content inspection, installation, command, version,
+  self-test, import
+
+The final head must rerun these checks after the 30th termios restoration test.
+
+## Not available in the local environment
+
+- Native local Wheel build tooling
+- Native local Nix
+- Native local Arch `makepkg`
+- Native local Fedora `rpmbuild`
+
+These were exercised in GitHub Actions rather than falsely claimed as local.
 
 ## Model/fuzz coverage currently represented
 
@@ -98,4 +111,4 @@ nix run .#default --no-write-lock-file -- --self-test
 ```
 
 Arch and Fedora exact commands are encoded in `.github/workflows/cross-distro.yml`.
-Record their actual job URLs and results here after they run.
+Record the final-head run IDs and conclusions here after they complete.
