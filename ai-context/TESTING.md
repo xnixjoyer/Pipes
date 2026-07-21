@@ -27,7 +27,9 @@ Results:
 
 - Version output: `pipes.sh 2.0.0`
 - Self-test output: `pipes.sh self-test: PASS`
-- Unit/model/integration tests: 27 tests, all passed
+- Unit/model/integration tests: 29 tests, all passed
+- Exact reset boundaries: passed for one and multiple clear points inside a
+  multi-pipe frame; renderer ordering is regression-tested
 - PTY: startup with `TERM=xterm-256color`, deterministic seed, ASCII type,
   no-color mode, normal key exit, `SIGINT`, `SIGTERM`, `SIGHUP`, and 1×1
   resize; passed with conventional signal exit codes, no traceback, and no zero
@@ -64,7 +66,7 @@ migration complete until actual successful commands are appended here.
 - Terminal sizes 1×1, 2×3, 7×5, 80×24, 500×200
 - Every edge direction
 - Keep mode and randomized crossing assignment
-- Reset enabled/disabled and multi-pipe limit
+- Reset enabled/disabled, exact glyph boundaries, and multiple resets per frame
 - Deterministic initialization and frames
 - Valid direction, position, type, and color bounds after each modeled step
 
