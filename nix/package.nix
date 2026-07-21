@@ -40,7 +40,10 @@ python3Packages.buildPythonApplication {
   installCheckPhase = ''
     runHook preInstallCheck
     test -x "$out/bin/pipes"
-    test -f "$out/share/man/man6/pipes.6"
+    test ! -e "$out/bin/pipes.sh"
+    test -f "$out/share/man/man6/pipes.6" || test -f "$out/share/man/man6/pipes.6.gz"
+    test ! -e "$out/share/man/man6/pipes.sh.6"
+    test ! -e "$out/share/man/man6/pipes.sh.6.gz"
     "$out/bin/pipes" --help >/dev/null
     test "$("$out/bin/pipes" --version)" = "pipes 3.0.0"
     "$out/bin/pipes" --self-test
