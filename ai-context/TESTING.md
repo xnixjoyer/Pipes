@@ -184,3 +184,12 @@ After selecting `main` under **Settings → General → Default branch**, execut
 and append the results of the unqualified metadata/build/run/profile commands
 listed in `MIGRATION_PLAN.md`. Do not mark the default-branch migration complete
 before those commands pass.
+
+
+## Version 3.0.0 command migration
+
+The public executable changes from `pipes.sh` to `pipes` with no compatibility
+alias. The feature branch must prove that Wheel, Nix, Arch, and Fedora contain
+`/bin/pipes` and `pipes(6)`, reject stale installed `pipes.sh` paths, report
+`pipes 3.0.0`, and pass the complete PTY/model suite plus the new command-name
+assertion. Run IDs are recorded after CI completes.

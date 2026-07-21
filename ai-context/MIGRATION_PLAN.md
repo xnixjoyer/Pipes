@@ -100,3 +100,15 @@ When CI fails, add the exact job/run, failing command, relevant log excerpt, roo
 cause, and correction to `TESTING.md`. Do not weaken a check merely to obtain a
 green result. Packaging failures must be fixed in their native packaging files,
 not hidden by installing into uncontrolled environments.
+
+
+## Public command migration — version 3.0.0
+
+- [x] Select `pipes` as the only installed executable name.
+- [x] Remove the `pipes.sh` console-script entry point and package file ownership.
+- [x] Rename the manual page to `pipes(6)`.
+- [x] Update Nix, Wheel, Arch, Fedora, help, errors, version output, and docs.
+- [x] Add centered custom SVG branding to the README.
+- [~] Update permanent CI workflows through the GitHub connector.
+- [~] Validate the complete 3.0.0 matrix in the feature pull request.
+- [ ] Merge only after Python 3.10/3.13, Wheel, Nix, Arch, Fedora, and PTY checks pass.

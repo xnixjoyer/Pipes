@@ -30,7 +30,7 @@ import unicodedata
 from collections.abc import Sequence
 from typing import Callable
 
-VERSION = "2.0.0"
+VERSION = "3.0.0"
 MIN_PIPES = 1
 MIN_FPS = 20
 MAX_FPS = 100
@@ -43,7 +43,7 @@ DEFAULT_RESET = 2000
 DEFAULT_COLORS = (1, 2, 3, 4, 5, 6, 7, 0)
 MIN_TERMINAL_WIDTH = 1
 MIN_TERMINAL_HEIGHT = 1
-SELF_TEST_PASS = "pipes.sh self-test: PASS"
+SELF_TEST_PASS = "pipes self-test: PASS"
 
 PIPE_SETS: tuple[str, ...] = (
     "┃┏ ┓┛━┓  ┗┃┛┗ ┏━",
@@ -176,7 +176,7 @@ def parse_type(value: str) -> str:
 
 def build_parser() -> ArgumentParser:
     parser = ArgumentParser(
-        prog="pipes.sh",
+        prog="pipes",
         description="Animated pipes terminal screensaver (unofficial Python rewrite).",
         add_help=False,
         allow_abbrev=False,
@@ -199,7 +199,7 @@ def build_parser() -> ArgumentParser:
 
 
 def help_text() -> str:
-    return """usage: pipes.sh [OPTION]...
+    return """usage: pipes [OPTION]...
 Animated pipes terminal screensaver (unofficial Python rewrite).
 
   -p [1-]               number of pipes (default: 1)
@@ -652,13 +652,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         options, action = parse_options(argv)
     except (CLIError, ValueError) as exc:
-        print(f"pipes.sh: {exc}", file=sys.stderr)
+        print(f"pipes: {exc}", file=sys.stderr)
         return 2
     if action == "help":
         print(help_text(), end="")
         return 0
     if action == "version":
-        print(f"pipes.sh {VERSION}")
+        print(f"pipes {VERSION}")
         return 0
     if action == "self-test":
         return run_self_test()
@@ -679,7 +679,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except BrokenPipeError:
         return 1
     except (RuntimeError, CLIError, curses.error, termios.error, OSError) as exc:
-        print(f"pipes.sh: {exc}", file=sys.stderr)
+        print(f"pipes: {exc}", file=sys.stderr)
         return 1
 
 

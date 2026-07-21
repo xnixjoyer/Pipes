@@ -39,7 +39,7 @@ class IntegrationTests(unittest.TestCase):
             timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), "pipes.sh self-test: PASS")
+        self.assertEqual(result.stdout.strip(), "pipes self-test: PASS")
 
     def _spawn_pty(self, *args):
         pid, fd = pty.fork()

@@ -1,5 +1,5 @@
 {
-  description = "Unofficial Python rewrite of the pipes.sh terminal screensaver";
+  description = "Pipes terminal screensaver — unofficial Python rewrite of pipes.sh";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -26,11 +26,11 @@
       );
 
       apps = forAllSystems (system: {
-        "pipes-sh" = {
+        pipes = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/pipes.sh";
+          program = "${self.packages.${system}.default}/bin/pipes";
         };
-        default = self.apps.${system}."pipes-sh";
+        default = self.apps.${system}.pipes;
       });
 
       checks = forAllSystems (system: {
