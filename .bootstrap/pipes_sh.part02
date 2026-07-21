@@ -1,0 +1,220 @@
+                + self.capabilities.hide_cursor
+                + self.capabilities.clear_screen,
+            )
+            self.started = True
+        except BaseException:
+            self.cleanup()
+            raise
+
+    def cleanup(self) -> None:
+        if self.cleaned:
+            return
+        self.cleaned = True
+        try:
+            if self.started:
+                self.write(
+                    self.stdout_fd,
+                    self.capabilities.sgr0
+                    + self.capabilities.show_cursor
+                    + self.capabilities.exit_alt,
+                )
+        finally:
+            if self.saved_attrs is not None:
+                try:
+                    termios.tcsetattr(self.stdin_fd, termios.TCSADRAIN, self.saved_attrs)
+                except termios.error:
+                    pass
+            for signum, handler in self.saved_handlers.items():
+                signal.signal(signum, handler)
+
+    def __enter__(self) -> "TerminalSession":
+        self.start()
+        return self
+
+    def __exit__(self, _type: object, _value: object, _traceback: object) -> None:
+        self.cleanup()
+
+
+class Renderer:
+    def __init__(
+        self,
+        fd: int,
+        capabilities: TerminalCapabilities,
+        options: Options,
+        write: Callable[[bytes], int] = os.write,
+    ) -> None:
+        self.fd = fd
+        self.capabilities = capabilities
+        self.options = options
+        self.write = write
+
+    def render(self, frame: FrameResult) -> None:
+        chunks: list[bytes] = []
+        if frame.clear:
+            chunks.append(self.capabilities.clear_screen)
+        for command in frame.commands:
+            chunks.append(self.capabilities.cursor(command.y, command.x))
+            chunks.append(
+                self.capabilities.style(
+                    command.color,
+                    bold=self.options.bold,
+                    color_enabled=self.options.color,
+                )
+            )
+            chunks.append(command.glyph.encode("utf-8"))
+        if chunks:
+            self.write(self.fd, b"".join(chunks))
+
+
+def terminal_size(fd: int) -> tuple[int, int]:
+    size = os.get_terminal_size(fd)
+    return max(1, size.columns), max(1, size.lines)
+
+
+def apply_key(options: Options, key: str) -> bool:
+    if key == "P":
+        options.straight = min(MAX_STRAIGHT, options.straight + 1)
+    elif key == "O":
+        options.straight = max(INTERACTIVE_MIN_STRAIGHT, options.straight - 1)
+    elif key == "F":
+        options.fps = min(MAX_FPS, options.fps + 1)
+    elif key == "D":
+        options.fps = max(MIN_FPS, options.fps - 1)
+    elif key == "B":
+        options.bold = not options.bold
+    elif key == "C":
+        options.color = not options.color
+    elif key == "K":
+        options.keep = not options.keep
+    else:
+        return False
+    return True
+
+
+class App:
+    def __init__(
+        self,
+        options: Options,
+        session: TerminalSession,
+        renderer: Renderer,
+        engine: Engine,
+    ) -> None:
+        self.options = options
+        self.session = session
+        self.renderer = renderer
+        self.engine = engine
+
+    def run(self) -> int:
+        next_frame = time.monotonic()
+        while self.session.stop_signal is None:
+            if self.session.resized:
+                self.session.resized = False
+                width, height = terminal_size(self.session.stdout_fd)
+                self.engine.resize(width, height)
+            now = time.monotonic()
+            frame_seconds = 1.0 / self.options.fps
+            timeout = max(0.0, next_frame - now)
+            readable, _, _ = select.select([self.session.stdin_fd], [], [], timeout)
+            if readable:
+                data = os.read(self.session.stdin_fd, 32)
+                if not data:
+                    return 0
+                for byte in data:
+                    if not apply_key(self.options, chr(byte)):
+                        return 0
+            now = time.monotonic()
+            if now >= next_frame:
+                self.renderer.render(self.engine.step())
+                next_frame += frame_seconds
+                if now - next_frame > frame_seconds * 4:
+                    next_frame = now + frame_seconds
+        return 128 + self.session.stop_signal
+
+
+def preflight() -> tuple[int, int, str]:
+    stdin_fd = sys.stdin.fileno()
+    stdout_fd = sys.stdout.fileno()
+    if not os.isatty(stdin_fd) or not os.isatty(stdout_fd):
+        raise RuntimeError("interactive mode requires TTY stdin and stdout")
+    term = os.environ.get("TERM", "")
+    if not term or term == "dumb":
+        raise RuntimeError("interactive mode requires a usable TERM value")
+    return stdin_fd, stdout_fd, term
+
+
+def run_self_test() -> int:
+    failures: list[str] = []
+
+    def check(condition: bool, message: str) -> None:
+        if not condition:
+            failures.append(message)
+
+    check(len(PIPE_SETS) == 10, "ten built-in pipe types")
+    check(all(len(pipe_set) == 16 for pipe_set in PIPE_SETS), "16 glyphs per type")
+    check(
+        all(transition_index(a, b) == a * 4 + b for a in range(4) for b in range(4)),
+        "transition matrix",
+    )
+    rng = random.Random(7)
+    check(
+        all((choose_direction(direction, 5, rng) - direction) % 4 != 2 for direction in range(4) for _ in range(100)),
+        "no reverse turns",
+    )
+    options, action = parse_options([])
+    check(action is None and options == Options(), "CLI defaults")
+    repeated, _ = parse_options(["-t", "4", "-t", "5", "-c", "1", "-c", "#ff"])
+    check(repeated is not None and len(repeated.types) == 2 and repeated.colors == [1, 255], "repeatable options")
+    check(parse_color("#FFA500") == 0xFFA500, "hex colors")
+    check(validate_custom_type("cMAYFORCEBWITHYOU") == "MAYFORCEBWITHYOU", "custom type")
+    deterministic = Options(pipes=2, seed=123, random_start=True)
+    e1 = Engine(deterministic, 10, 5)
+    e2 = Engine(deterministic, 10, 5)
+    check(e1.pipes == e2.pipes and e1.step() == e2.step(), "deterministic seed")
+    edge = Engine(Options(seed=1, keep=True), 2, 2)
+    edge.pipes[0] = PipeState(0, 0, Direction.UP, 0, 0)
+    frame = edge.step()
+    check(frame.commands[0].y == 1, "top edge wrap")
+    reset = Engine(Options(pipes=2, seed=1, reset_limit=2), 5, 5)
+    check(reset.step().clear, "multi-pipe reset")
+    resize = Engine(Options(seed=1), 5, 5)
+    resize.resize(0, 0)
+    check(resize.width == 1 and resize.height == 1, "safe resize")
+    key_options = Options()
+    check(apply_key(key_options, "B") and not key_options.bold, "bold key")
+    check(apply_key(key_options, "C") and not key_options.color, "color key")
+    for width, height in ((1, 1), (2, 3), (80, 24), (500, 200)):
+        model = Engine(Options(pipes=8, seed=width * height, reset_limit=0), width, height)
+        for _ in range(200):
+            model.step()
+            check(all(0 <= p.x < model.width and 0 <= p.y < model.height for p in model.pipes), "coordinate bounds")
+    try:
+        parse_options(["-f", "0"])
+    except CLIError:
+        pass
+    else:
+        failures.append("invalid timing rejected")
+    if failures:
+        for failure in failures:
+            print(f"self-test failure: {failure}", file=sys.stderr)
+        return 1
+    print(SELF_TEST_PASS)
+    return 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    try:
+        options, action = parse_options(argv)
+    except (CLIError, ValueError) as exc:
+        print(f"pipes.sh: {exc}", file=sys.stderr)
+        return 2
+    if action == "help":
+        print(help_text(), end="")
+        return 0
+    if action == "version":
+        print(f"pipes.sh {VERSION}")
+        return 0
+    if action == "self-test":
+        return run_self_test()
+    assert options is not None
