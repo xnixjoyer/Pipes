@@ -11,9 +11,8 @@ required external verification, `[ ]` not completed.
 - [x] Create `backup/master-before-python-rewrite-20260721` at historical SHA.
 - [x] Create `main` at historical SHA.
 - [x] Create `rewrite/python-single-file` at historical SHA.
-- [~] Create annotated tag `pre-python-master-20260721` and verify target.
-  A one-time contents-write workflow is staged because the connector has no
-  direct annotated-tag mutation.
+- [x] Create annotated tag `pre-python-master-20260721` and verify that it is
+  commit-identical to historical `master`.
 
 ## Rewrite
 
@@ -21,31 +20,31 @@ required external verification, `[ ]` not completed.
 - [x] Pure CLI/model functions and deterministic engine.
 - [x] Terminfo capabilities, direct buffered renderer, terminal session cleanup.
 - [x] Immediate bold/color toggles and documented legacy corrections.
-- [x] Unit/model/self/PTY test sources.
+- [x] Unit/model/self/PTY test sources, including exact termios restoration.
 - [x] README, manpage, and canonical AI context.
 
 ## Packaging
 
 - [x] `pyproject.toml` and console entry point.
-- [x] Nix flake, lock, derivation, package/app/check/dev-shell exports.
-- [x] Arch `PKGBUILD` and `.SRCINFO`.
-- [x] Fedora spec.
+- [x] Wheel build/install/content inspection on Python 3.10 and 3.13.
+- [x] Nix flake, lock, derivation, checks, build, run, exact-commit remote tests,
+  and profile installation.
+- [x] Arch unprivileged build, content inspection, installation, and self-test.
+- [x] Fedora RPM build, content inspection, installation, and self-test.
 - [x] GitHub Actions definitions.
-- [~] Wheel build/install/content inspection — awaiting final-head CI.
-- [~] Nix check/build/run/profile/remote checks — awaiting final-head CI.
-- [~] Arch unprivileged build/install/content checks — awaiting final-head CI.
-- [~] Fedora RPM build/install/content checks — awaiting final-head CI.
 
 ## GitHub integration
 
-- [x] Push all locally verified files to `rewrite/python-single-file`.
+- [x] Push all verified files to `rewrite/python-single-file`.
 - [x] Open draft PR #1 to `main` with test and rollback report.
-- [ ] Require successful CI for Python, PTY, Nix, Arch, and Fedora.
-- [ ] Merge only after all required checks pass.
-- [ ] Confirm merged `main` SHA.
+- [x] Successful Python, PTY, Wheel, Nix, Arch, and Fedora CI on executable head
+  `155e311fa38791f033984ef622b1ef7902c4c1ec`.
+- [~] Re-run CI on the final status-only documentation head.
+- [ ] Mark PR ready and merge after that final check.
+- [ ] Confirm merged `main` SHA and push-CI.
 - [ ] Change repository default branch to `main` in GitHub settings.
-- [ ] Verify remote default flake and exact-main flake installs.
-- [ ] Mark temporary branch deletable; do not delete automatically.
+- [ ] Verify remote default flake after the default-branch change.
+- [ ] Mark `rewrite/python-single-file` deletable; do not delete automatically.
 
 ## Failure handling
 
