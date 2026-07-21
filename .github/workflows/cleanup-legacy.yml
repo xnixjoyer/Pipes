@@ -1,0 +1,85 @@
+name: Apply legacy cleanup
+
+on:
+  push:
+    branches: [cleanup/remove-legacy-files]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cleanup/remove-legacy-files
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Remove obsolete Bash-era files
+        run: |
+          rm -f \
+            .travis.yml \
+            CONTRIBUTING.rst \
+            pipes.sh \
+            scripts/README \
+            scripts/benchmark.sh \
+            scripts/gen-man-html.sh \
+            scripts/travis-script.sh \
+            test/README \
+            test/helper.sh \
+            test/run_tests.sh \
+            test/test_command.sh \
+            test/test_init.sh \
+            test/test_main.sh \
+            test/test_parse.sh \
+            i/pipes.png \
+            .github/ISSUE_TEMPLATE.md \
+            .github/ISSUE_TEMPLATE/BUG.md
+          rmdir test i .github/ISSUE_TEMPLATE 2>/dev/null || true
+
+      - name: Verify the minimal maintained tree
+        run: |
+          test -f LICENSE
+          test -f README.md
+          test -f assets/pipes-logo.svg
+          test -f pipes_sh.py
+          test -f pipes.6
+          test -f pyproject.toml
+          test -f scripts/benchmark.py
+          test -d ai-context
+          test -f ai-context/README.md
+          test -f ai-context/CLEANUP_PLAN.md
+          test -d tests
+          test -d packaging
+          test -d nix
+          test -f .github/workflows/cross-distro.yml
+          test -f .github/workflows/nix.yml
+          for path in \
+            .travis.yml CONTRIBUTING.rst pipes.sh scripts/README \
+            scripts/benchmark.sh scripts/gen-man-html.sh scripts/travis-script.sh \
+            test i/pipes.png .github/ISSUE_TEMPLATE.md .github/ISSUE_TEMPLATE/BUG.md; do
+            test ! -e "$path"
+          done
+
+      - name: Run maintained checks
+        run: |
+          python -m compileall -q pipes_sh.py tests
+          python -m unittest discover -s tests -v
+          python pipes_sh.py --self-test
+          python -O pipes_sh.py --self-test
+          test "$(python pipes_sh.py --version)" = "pipes 3.0.0"
+          python scripts/benchmark.py --steps 1000 --pipes 8
+
+      - name: Commit cleanup
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Remove obsolete Bash-era repository files"
+          git push origin HEAD:cleanup/remove-legacy-files
