@@ -143,7 +143,6 @@ jobs:
           testing.write_text(testing.read_text() + '''\n\n## Version 3.0.0 command migration\n\nThe public executable changes from `pipes.sh` to `pipes` with no compatibility\nalias. The feature branch must prove that Wheel, Nix, Arch, and Fedora contain\n`/bin/pipes` and `pipes(6)`, reject stale installed `pipes.sh` paths, report\n`pipes 3.0.0`, and pass the complete PTY/model suite plus the new command-name\nassertion. Run IDs are recorded after CI completes.\n''')
 
           Path("pipes.sh.6").unlink()
-          Path(".github/workflows/apply-pipes-command.yml").unlink()
           PY
 
       - name: Validate transformed tree
