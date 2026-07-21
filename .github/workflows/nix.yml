@@ -35,8 +35,9 @@ jobs:
           nix build .#default --no-write-lock-file --print-build-logs
           test -x ./result/bin/pipes
           test ! -e ./result/bin/pipes.sh
-          test -f ./result/share/man/man6/pipes.6
+          test -f ./result/share/man/man6/pipes.6 || test -f ./result/share/man/man6/pipes.6.gz
           test ! -e ./result/share/man/man6/pipes.sh.6
+          test ! -e ./result/share/man/man6/pipes.sh.6.gz
           ./result/bin/pipes --help >/dev/null
           test "$(./result/bin/pipes --version)" = "pipes 3.0.0"
           ./result/bin/pipes --self-test
