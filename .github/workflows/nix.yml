@@ -1,0 +1,58 @@
+name: Nix
+
+on:
+  push:
+    branches: [main, rewrite/python-single-file]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify lock and formatting
+        run: |
+          nix flake metadata --no-write-lock-file . >/dev/null
+          git diff --exit-code -- flake.lock
+          nix develop --command nixfmt --check flake.nix nix/package.nix
+
+      - name: Check and build
+        run: |
+          nix flake check --no-write-lock-file --print-build-logs
+          nix build .#default --no-write-lock-file --print-build-logs
+          ./result/bin/pipes.sh --help >/dev/null
+          test "$(./result/bin/pipes.sh --version)" = "pipes.sh 2.0.0"
+          ./result/bin/pipes.sh --self-test
+          nix run .#default --no-write-lock-file -- --self-test
+
+      - name: Exact commit remote checks
+        env:
+          FLAKE: github:${{ github.repository }}/${{ github.sha }}
+        run: |
+          nix build "$FLAKE#default" --print-build-logs
+          nix run "$FLAKE#default" -- --self-test
+          export HOME="$RUNNER_TEMP/profile-home"
+          mkdir -p "$HOME"
+          nix profile add "$FLAKE#default"
+          "$HOME/.nix-profile/bin/pipes.sh" --self-test
+
+      - name: Upload Nix log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nix-log-${{ github.run_id }}
+          path: /nix/var/log/nix
+          if-no-files-found: ignore
