@@ -1,0 +1,19 @@
+pkgbase = pipes-sh-python
+	pkgdesc = Unofficial Python rewrite of the pipes.sh terminal screensaver
+	pkgver = 2.0.0
+	pkgrel = 1
+	url = https://github.com/xnixjoyer/Pipes
+	arch = any
+	license = MIT
+	makedepends = python-build
+	makedepends = python-installer
+	makedepends = python-setuptools
+	makedepends = python-wheel
+	depends = python
+	depends = ncurses
+	provides = pipes.sh
+	conflicts = pipes.sh
+	source = pipes-sh-python-2.0.0.tar.gz::https://github.com/xnixjoyer/Pipes/archive/refs/tags/v2.0.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = pipes-sh-python
