@@ -70,6 +70,44 @@ nix profile add github:xnixjoyer/Pipes
 pipes --self-test
 ```
 
+#### Fish reports `Unknown command: pipes`
+
+First verify that the profile actually contains the executable:
+
+```fish
+nix profile list
+~/.nix-profile/bin/pipes --self-test
+```
+
+When the direct path works, the package is installed and the missing part is the
+user-profile directory in Fish's `PATH`. Add it once:
+
+```fish
+fish_add_path ~/.nix-profile/bin
+pipes --self-test
+```
+
+With Nix's XDG profile layout, use this path instead:
+
+```fish
+fish_add_path ~/.local/state/nix/profile/bin
+```
+
+Useful diagnostics:
+
+```fish
+command -v pipes
+string split : $PATH | string match '*nix*profile*bin*'
+ls -l ~/.nix-profile/bin/pipes ~/.local/state/nix/profile/bin/pipes 2>/dev/null
+```
+
+To remove the package, use the profile element name shown by `nix profile list`,
+for example:
+
+```bash
+nix profile remove Pipes
+```
+
 NixOS flake input:
 
 ```nix
