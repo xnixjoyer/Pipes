@@ -11,6 +11,30 @@ permissions:
   contents: read
 
 jobs:
+  repository-hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify maintained repository surface
+        run: |
+          test "$(git hash-object LICENSE)" = "51bcb06d84329959bf250dfddac82c7c0da772e4"
+          for path in \
+            LICENSE README.md assets/pipes-logo.svg pipes_sh.py pipes.6 \
+            pyproject.toml Makefile flake.nix flake.lock nix/package.nix \
+            packaging/arch/PKGBUILD packaging/fedora/pipes-sh-python.spec \
+            scripts/benchmark.py tests ai-context ai-context/README.md \
+            ai-context/CLEANUP_PLAN.md ai-context/NIX_TROUBLESHOOTING.md; do
+            test -e "$path"
+          done
+          for path in \
+            pipes.sh pipes.sh.6 .travis.yml CONTRIBUTING.rst test i/pipes.png \
+            scripts/README scripts/benchmark.sh scripts/gen-man-html.sh \
+            scripts/travis-script.sh .github/ISSUE_TEMPLATE.md \
+            .github/ISSUE_TEMPLATE/BUG.md; do
+            test ! -e "$path"
+          done
+
   python-wheel:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -105,7 +129,7 @@ jobs:
           python -c 'import pipes_sh; assert pipes_sh.VERSION == "3.0.0"'
 
   fedora-rpm:
-    needs: [python-wheel, nix-gate, arch-package]
+    needs: [repository-hygiene, python-wheel, nix-gate, arch-package]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     container: fedora:latest
