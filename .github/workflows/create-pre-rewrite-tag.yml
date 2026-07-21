@@ -1,0 +1,42 @@
+name: Create verified pre-rewrite tag
+
+on:
+  push:
+    branches: [rewrite/python-single-file]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create or verify annotated historical tag
+        env:
+          OLD_SHA: 581792d4e0ea51e15889ba14a85db1bc9727b83d
+          TAG: pre-python-master-20260721
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
+          else
+            git tag -a "$TAG" "$OLD_SHA" -m "Backup before Python rewrite and packaging migration"
+            git push origin "refs/tags/$TAG"
+          fi
+          test "$(git rev-list -n 1 "$TAG")" = "$OLD_SHA"
+          test "$(git cat-file -t "$TAG")" = tag
+
+      - name: Remove one-time workflow
+        run: |
+          rm -f .github/workflows/create-pre-rewrite-tag.yml
+          git add -A
+          git commit -m "Remove one-time pre-rewrite tag workflow"
+          git push
