@@ -1,0 +1,48 @@
+name: Assemble Python rewrite
+
+on:
+  push:
+    branches: [rewrite/python-single-file]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assemble reviewed plaintext runtime
+        run: |
+          cat \
+            .bootstrap/pipes_sh.part00 \
+            .bootstrap/pipes_sh.part01 \
+            .bootstrap/pipes_sh.part02 \
+            .bootstrap/pipes_sh.part03 \
+            > pipes_sh.py
+          python3 .bootstrap/patch_runtime.py
+          chmod +x pipes_sh.py
+
+      - name: Validate assembled runtime
+        run: |
+          python3 -m compileall -q pipes_sh.py tests
+          python3 -m unittest discover -s tests -v
+          python3 pipes_sh.py --self-test
+          python3 -O pipes_sh.py --self-test
+          test "$(python3 pipes_sh.py --version)" = "pipes.sh 2.0.0"
+
+      - name: Commit single-file runtime
+        run: |
+          rm -rf .bootstrap
+          rm -f .github/workflows/bootstrap-python-rewrite.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Assemble single-file Python runtime"
+          git push
