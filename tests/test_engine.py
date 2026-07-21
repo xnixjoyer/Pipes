@@ -35,8 +35,15 @@ class EngineTests(unittest.TestCase):
 
     def test_reset_counts_drawn_characters(self):
         engine = pipes_sh.Engine(pipes_sh.Options(pipes=8, reset_limit=8, seed=1), 20, 10)
-        self.assertTrue(engine.step().clear)
+        frame = engine.step()
+        self.assertEqual(frame.clear_after, (8,))
         self.assertEqual(engine.drawn, 0)
+
+    def test_multiple_reset_boundaries_inside_frame(self):
+        engine = pipes_sh.Engine(pipes_sh.Options(pipes=8, reset_limit=3, seed=1), 20, 10)
+        frame = engine.step()
+        self.assertEqual(frame.clear_after, (3, 6))
+        self.assertEqual(engine.drawn, 2)
 
     def test_resize_never_creates_zero_dimensions(self):
         engine = pipes_sh.Engine(pipes_sh.Options(seed=1), 10, 10)
