@@ -11,8 +11,9 @@ required external verification, `[ ]` not completed.
 - [x] Create `backup/master-before-python-rewrite-20260721` at historical SHA.
 - [x] Create `main` at historical SHA.
 - [x] Create `rewrite/python-single-file` at historical SHA.
-- [ ] Create annotated tag `pre-python-master-20260721` and verify target.
-  Current GitHub connector has no annotated-tag mutation.
+- [~] Create annotated tag `pre-python-master-20260721` and verify target.
+  A one-time contents-write workflow is staged because the connector has no
+  direct annotated-tag mutation.
 
 ## Rewrite
 
@@ -30,15 +31,15 @@ required external verification, `[ ]` not completed.
 - [x] Arch `PKGBUILD` and `.SRCINFO`.
 - [x] Fedora spec.
 - [x] GitHub Actions definitions.
-- [~] Wheel build/install/content inspection — awaiting CI or local build tools.
-- [~] Nix check/build/run/profile/remote checks — awaiting Nix runner.
-- [~] Arch unprivileged build/install/content checks — awaiting Arch runner.
-- [~] Fedora RPM build/install/content checks — gated after Python/Nix/Arch.
+- [~] Wheel build/install/content inspection — awaiting final-head CI.
+- [~] Nix check/build/run/profile/remote checks — awaiting final-head CI.
+- [~] Arch unprivileged build/install/content checks — awaiting final-head CI.
+- [~] Fedora RPM build/install/content checks — awaiting final-head CI.
 
 ## GitHub integration
 
 - [x] Push all locally verified files to `rewrite/python-single-file`.
-- [ ] Open PR to `main` with test and rollback report.
+- [x] Open draft PR #1 to `main` with test and rollback report.
 - [ ] Require successful CI for Python, PTY, Nix, Arch, and Fedora.
 - [ ] Merge only after all required checks pass.
 - [ ] Confirm merged `main` SHA.
