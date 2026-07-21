@@ -1,0 +1,179 @@
+name: Apply pipes command migration
+
+on:
+  push:
+    branches: [feature/pipes-command-logo-readme]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/pipes-command-logo-readme
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Rename the public command everywhere
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str, count: int | None = None) -> None:
+              file = Path(path)
+              text = file.read_text()
+              found = text.count(old)
+              if count is not None and found != count:
+                  raise SystemExit(f"{path}: expected {count} occurrences of {old!r}, found {found}")
+              if found == 0:
+                  raise SystemExit(f"{path}: missing {old!r}")
+              file.write_text(text.replace(old, new))
+
+          replacements = {
+              "pipes_sh.py": [
+                  ('VERSION = "2.0.0"', 'VERSION = "3.0.0"', 1),
+                  ('SELF_TEST_PASS = "pipes.sh self-test: PASS"', 'SELF_TEST_PASS = "pipes self-test: PASS"', 1),
+                  ('prog="pipes.sh"', 'prog="pipes"', 1),
+                  ('return """usage: pipes.sh [OPTION]...', 'return """usage: pipes [OPTION]...', 1),
+                  ('print(f"pipes.sh: {exc}", file=sys.stderr)', 'print(f"pipes: {exc}", file=sys.stderr)', 2),
+                  ('print(f"pipes.sh {VERSION}")', 'print(f"pipes {VERSION}")', 1),
+              ],
+              "pyproject.toml": [
+                  ('"pipes.sh" = "pipes_sh:main"', 'pipes = "pipes_sh:main"', 1),
+                  ('"share/man/man6" = ["pipes.sh.6"]', '"share/man/man6" = ["pipes.6"]', 1),
+              ],
+              "Makefile": [('pipes.sh.6', 'pipes.6', 1)],
+              "flake.nix": [
+                  ('description = "Unofficial Python rewrite of the pipes.sh terminal screensaver";', 'description = "Pipes terminal screensaver — unofficial Python rewrite of pipes.sh";', 1),
+                  ('"pipes-sh" = {', 'pipes = {', 1),
+                  ('/bin/pipes.sh', '/bin/pipes', 1),
+                  ('default = self.apps.${system}."pipes-sh";', 'default = self.apps.${system}.pipes;', 1),
+              ],
+              "nix/package.nix": [
+                  ('version = "2.0.0";', 'version = "3.0.0";', 1),
+                  ('/bin/pipes.sh', '/bin/pipes', 7),
+                  ('/man6/pipes.sh.6', '/man6/pipes.6', 1),
+                  ('pipes.sh 2.0.0', 'pipes 3.0.0', 1),
+                  ('pipes_sh.VERSION == "2.0.0"', 'pipes_sh.VERSION == "3.0.0"', 1),
+                  ('mainProgram = "pipes.sh";', 'mainProgram = "pipes";', 1),
+              ],
+              "packaging/arch/PKGBUILD": [
+                  ('pkgver=2.0.0', 'pkgver=3.0.0', 1),
+                  ("pkgdesc='Unofficial Python rewrite of the pipes.sh terminal screensaver'", "pkgdesc='Pipes terminal screensaver, independently rewritten in Python'", 1),
+                  ("provides=('pipes.sh')\nconflicts=('pipes.sh')", "provides=('pipes')", 1),
+              ],
+              "packaging/fedora/pipes-sh-python.spec": [
+                  ('Version:        2.0.0', 'Version:        3.0.0', 1),
+                  ('Summary:        Unofficial Python rewrite of the pipes.sh terminal screensaver', 'Summary:        Pipes terminal screensaver, independently rewritten in Python', 1),
+                  ('Provides:       pipes.sh = %{version}-%{release}\nConflicts:      pipes-sh', 'Provides:       pipes = %{version}-%{release}', 1),
+                  ('terminal screensaver. The public command remains pipes.sh for compatibility.', 'terminal screensaver. The installed public command is pipes; no pipes.sh alias is shipped.', 1),
+                  ('%{_bindir}/pipes.sh', '%{_bindir}/pipes', 1),
+                  ('%{_mandir}/man6/pipes.sh.6*', '%{_mandir}/man6/pipes.6*', 1),
+                  ('- 2.0.0-1\n- Initial package for the independent Python rewrite', '- 3.0.0-1\n- Rename the installed command to pipes and add the pipes(6) manual', 1),
+              ],
+              "tests/test_integration.py": [
+                  ('"pipes.sh self-test: PASS"', '"pipes self-test: PASS"', 1),
+              ],
+              "tests/test_version.py": [
+                  ('"2.0.0"', '"3.0.0"', 1),
+              ],
+              ".github/workflows/cross-distro.yml": [
+                  ('pipes.sh.6', 'pipes.6', 3),
+                  ('/bin/pipes.sh', '/bin/pipes', 2),
+                  ('pipes.sh --help', 'pipes --help', 2),
+                  ('pipes.sh --version', 'pipes --version', 2),
+                  ('pipes.sh --self-test', 'pipes --self-test', 2),
+                  ('pipes.sh 2.0.0', 'pipes 3.0.0', 3),
+                  ('VERSION == "2.0.0"', 'VERSION == "3.0.0"', 3),
+                  ('Pipes-2.0.0', 'Pipes-3.0.0', 2),
+                  ('pipes-sh-python-2.0.0.tar.gz', 'pipes-sh-python-3.0.0.tar.gz', 3),
+                  ('v2.0.0.tar.gz', 'v3.0.0.tar.gz', 1),
+              ],
+              ".github/workflows/nix.yml": [
+                  ('/bin/pipes.sh', '/bin/pipes', 4),
+                  ('pipes.sh 2.0.0', 'pipes 3.0.0', 1),
+              ],
+              ".gitignore": [('pipes.sh.6.html', 'pipes.6.html', 1)],
+          }
+
+          for path, rules in replacements.items():
+              for old, new, count in rules:
+                  replace(path, old, new, count)
+
+          Path("packaging/arch/.SRCINFO").write_text("""pkgbase = pipes-sh-python
+          \tpkgdesc = Pipes terminal screensaver, independently rewritten in Python
+          \tpkgver = 3.0.0
+          \tpkgrel = 1
+          \turl = https://github.com/xnixjoyer/Pipes
+          \tarch = any
+          \tlicense = MIT
+          \tmakedepends = python-build
+          \tmakedepends = python-installer
+          \tmakedepends = python-setuptools
+          \tmakedepends = python-wheel
+          \tdepends = python
+          \tdepends = ncurses
+          \tprovides = pipes
+          \tsource = pipes-sh-python-3.0.0.tar.gz::https://github.com/xnixjoyer/Pipes/archive/refs/tags/v3.0.0.tar.gz
+          \tsha256sums = SKIP
+
+          pkgname = pipes-sh-python
+          """)
+
+          cli_test = Path("tests/test_cli.py")
+          text = cli_test.read_text()
+          marker = '\n\nif __name__ == "__main__":\n'
+          addition = '''\n    def test_public_command_name(self):\n        self.assertEqual(pipes_sh.build_parser().prog, "pipes")\n        self.assertTrue(pipes_sh.help_text().startswith("usage: pipes [OPTION]..."))\n\n'''
+          if addition.strip() not in text:
+              text = text.replace(marker, addition + marker)
+              cli_test.write_text(text)
+
+          decisions = Path("ai-context/DECISIONS.md")
+          text = decisions.read_text()
+          text = text.replace('- Public command: `pipes.sh`', '- Public command: `pipes` (no `pipes.sh` alias)')
+          text = text.replace('## D-004 — Version 2.0.0', '## D-004 — Version 3.0.0')
+          text = text.replace('The rewrite starts at 2.0.0 due to language/runtime replacement, packaging\nchange, terminal implementation change, deterministic model API, and deliberate\nlegacy corrections. `pipes_sh.VERSION` is canonical.', 'Version 3.0.0 makes the public command unambiguously `pipes` and removes the\nprevious `pipes.sh` executable alias. This is a deliberate breaking CLI change.\nThe module and distribution names remain stable; `pipes_sh.VERSION` is canonical.')
+          text += '''\n\n## D-013 — One public executable\n\nOnly `/bin/pipes` is installed. Historical documentation may name the original\nproject `pipes.sh`, but packaging, help, errors, version output, tests, and the\nman page use `pipes`. No compatibility symlink or wrapper is shipped.\n'''
+          decisions.write_text(text)
+
+          architecture = Path("ai-context/ARCHITECTURE.md")
+          text = architecture.read_text()
+          text = text.replace('## Entry point\n\n`main(argv=None)`', '## Entry point\n\nThe installed executable is `pipes`; the importable implementation remains\n`pipes_sh.py`. `main(argv=None)`')
+          architecture.write_text(text)
+
+          migration = Path("ai-context/MIGRATION_PLAN.md")
+          migration.write_text(migration.read_text() + '''\n\n## Public command migration — version 3.0.0\n\n- [x] Select `pipes` as the only installed executable name.\n- [x] Remove the `pipes.sh` console-script entry point and package file ownership.\n- [x] Rename the manual page to `pipes(6)`.\n- [x] Update Nix, Wheel, Arch, Fedora, CI, help, errors, version output, and docs.\n- [x] Add centered custom SVG branding to the README.\n- [~] Validate the complete 3.0.0 matrix in the feature pull request.\n- [ ] Merge only after Python 3.10/3.13, Wheel, Nix, Arch, Fedora, and PTY checks pass.\n''')
+
+          testing = Path("ai-context/TESTING.md")
+          testing.write_text(testing.read_text() + '''\n\n## Version 3.0.0 command migration\n\nThe public executable changes from `pipes.sh` to `pipes` with no compatibility\nalias. The feature branch must prove that Wheel, Nix, Arch, and Fedora contain\n`/bin/pipes` and `pipes(6)`, reject stale installed `pipes.sh` paths, report\n`pipes 3.0.0`, and pass the complete existing 30-test PTY/model suite plus the\nnew parser/help command-name assertion. Run IDs are recorded after CI completes.\n''')
+
+          Path("pipes.sh.6").unlink()
+          Path(".github/workflows/apply-pipes-command.yml").unlink()
+          PY
+
+      - name: Validate transformed tree
+        run: |
+          python -m compileall -q pipes_sh.py tests
+          python -m unittest discover -s tests -v
+          python pipes_sh.py --self-test
+          python -O pipes_sh.py --self-test
+          test "$(python pipes_sh.py --version)" = "pipes 3.0.0"
+          test -f pipes.6
+          test ! -e pipes.sh.6
+          ! grep -R '/bin/pipes\.sh\|pipes\.sh --version\|pipes\.sh --self-test' \
+              pyproject.toml flake.nix nix packaging .github/workflows tests
+
+      - name: Commit migration
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Rename public command to pipes"
+          git push origin HEAD:feature/pipes-command-logo-readme
