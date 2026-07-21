@@ -23,6 +23,25 @@ class TerminalTests(unittest.TestCase):
         self.assertEqual(len(writes), 1)
         self.assertEqual(writes[0][1], b"R" + b"S" + b"Z")
 
+    def test_renderer_clears_at_exact_glyph_boundary(self):
+        caps = pipes_sh.TerminalCapabilities(0, None, b"CLR", b"", b"", b"", b"", b"R", b"", None)
+        writes = []
+        renderer = pipes_sh.Renderer(
+            1,
+            caps,
+            pipes_sh.Options(bold=False, color=False),
+            write=lambda fd, data: writes.append(data) or len(data),
+        )
+        frame = pipes_sh.FrameResult(
+            (
+                pipes_sh.DrawCommand(0, 0, "A", 0),
+                pipes_sh.DrawCommand(1, 0, "B", 0),
+            ),
+            (1,),
+        )
+        renderer.render(frame)
+        self.assertEqual(writes, [b"\x1b[1;1H" + b"RA" + b"CLR" + b"\x1b[1;2H" + b"RB"])
+
     def test_signal_exit_code(self):
         options = pipes_sh.Options()
         caps = pipes_sh.TerminalCapabilities(0, None, b"", b"", b"", b"", b"", b"", b"", None)
