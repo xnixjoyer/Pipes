@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Rename the public command everywhere
+      - name: Rename the public command everywhere except permanent workflows
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -77,22 +77,6 @@ jobs:
               ],
               "tests/test_integration.py": [('"pipes.sh self-test: PASS"', '"pipes self-test: PASS"')],
               "tests/test_version.py": [('"2.0.0"', '"3.0.0"')],
-              ".github/workflows/cross-distro.yml": [
-                  ('pipes.sh.6', 'pipes.6'),
-                  ('/bin/pipes.sh', '/bin/pipes'),
-                  ('pipes.sh --help', 'pipes --help'),
-                  ('pipes.sh --version', 'pipes --version'),
-                  ('pipes.sh --self-test', 'pipes --self-test'),
-                  ('pipes.sh 2.0.0', 'pipes 3.0.0'),
-                  ('VERSION == "2.0.0"', 'VERSION == "3.0.0"'),
-                  ('Pipes-2.0.0', 'Pipes-3.0.0'),
-                  ('pipes-sh-python-2.0.0.tar.gz', 'pipes-sh-python-3.0.0.tar.gz'),
-                  ('v2.0.0.tar.gz', 'v3.0.0.tar.gz'),
-              ],
-              ".github/workflows/nix.yml": [
-                  ('/bin/pipes.sh', '/bin/pipes'),
-                  ('pipes.sh 2.0.0', 'pipes 3.0.0'),
-              ],
               ".gitignore": [('pipes.sh.6.html', 'pipes.6.html')],
           }
           for path, replacements in rules.items():
@@ -137,7 +121,7 @@ jobs:
           architecture.write_text(architecture.read_text().replace('## Entry point\n\n`main(argv=None)`', '## Entry point\n\nThe installed executable is `pipes`; the importable implementation remains\n`pipes_sh.py`. `main(argv=None)`'))
 
           migration = Path("ai-context/MIGRATION_PLAN.md")
-          migration.write_text(migration.read_text() + '''\n\n## Public command migration — version 3.0.0\n\n- [x] Select `pipes` as the only installed executable name.\n- [x] Remove the `pipes.sh` console-script entry point and package file ownership.\n- [x] Rename the manual page to `pipes(6)`.\n- [x] Update Nix, Wheel, Arch, Fedora, CI, help, errors, version output, and docs.\n- [x] Add centered custom SVG branding to the README.\n- [~] Validate the complete 3.0.0 matrix in the feature pull request.\n- [ ] Merge only after Python 3.10/3.13, Wheel, Nix, Arch, Fedora, and PTY checks pass.\n''')
+          migration.write_text(migration.read_text() + '''\n\n## Public command migration — version 3.0.0\n\n- [x] Select `pipes` as the only installed executable name.\n- [x] Remove the `pipes.sh` console-script entry point and package file ownership.\n- [x] Rename the manual page to `pipes(6)`.\n- [x] Update Nix, Wheel, Arch, Fedora, help, errors, version output, and docs.\n- [x] Add centered custom SVG branding to the README.\n- [~] Update permanent CI workflows through the GitHub connector.\n- [~] Validate the complete 3.0.0 matrix in the feature pull request.\n- [ ] Merge only after Python 3.10/3.13, Wheel, Nix, Arch, Fedora, and PTY checks pass.\n''')
 
           testing = Path("ai-context/TESTING.md")
           testing.write_text(testing.read_text() + '''\n\n## Version 3.0.0 command migration\n\nThe public executable changes from `pipes.sh` to `pipes` with no compatibility\nalias. The feature branch must prove that Wheel, Nix, Arch, and Fedora contain\n`/bin/pipes` and `pipes(6)`, reject stale installed `pipes.sh` paths, report\n`pipes 3.0.0`, and pass the complete PTY/model suite plus the new command-name\nassertion. Run IDs are recorded after CI completes.\n''')
@@ -155,8 +139,7 @@ jobs:
           test -f pipes.6
           test ! -e pipes.sh.6
           ! grep -R '/bin/pipes\.sh\|pipes\.sh --version\|pipes\.sh --self-test' \
-              pyproject.toml flake.nix nix packaging \
-              .github/workflows/cross-distro.yml .github/workflows/nix.yml tests
+              pyproject.toml flake.nix nix packaging tests
 
       - name: Commit migration
         run: |
