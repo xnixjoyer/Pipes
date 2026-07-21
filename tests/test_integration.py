@@ -114,10 +114,10 @@ class IntegrationTests(unittest.TestCase):
     def test_pty_resize(self):
         pid, fd = self._spawn_pty("-p", "8", "-C")
         try:
-            time.sleep(0.2)
+            initial = self._wait_started(fd)
             fcntl.ioctl(fd, getattr(__import__("termios"), "TIOCSWINSZ"), struct.pack("HHHH", 1, 1, 0, 0))
             os.kill(pid, signal.SIGWINCH)
-            initial = self._wait_started(fd)
+            time.sleep(0.2)
             os.write(fd, b"q")
             self._collect(pid, fd, 0, initial=initial)
         finally:
