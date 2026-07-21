@@ -17,6 +17,9 @@ Conflicts:      pipes-sh
 An unofficial, independently maintained Python rewrite of the classic pipes.sh
 terminal screensaver. The public command remains pipes.sh for compatibility.
 
+%prep
+%autosetup -n Pipes-%{version}
+
 %generate_buildrequires
 %pyproject_buildrequires
 
