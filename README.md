@@ -6,6 +6,12 @@ runtime is now `pipes_sh.py` and requires Python 3.10 or newer.
 
 > This is an unofficial, independently maintained rewrite. It is not an
 > official Pipeseroni release.
+>
+> **Repository transition:** the Python rewrite is merged into `main`, but the
+> GitHub repository still has `master` configured as its default branch. Until
+> an administrator changes that setting, use explicit `/main` remote references
+> shown below. Unqualified `github:xnixjoyer/Pipes` references still resolve to
+> the historical Bash tree.
 
 ![Historical pipes.sh screenshot](i/pipes.png)
 
@@ -156,6 +162,17 @@ python3 -O ./pipes_sh.py --self-test
 
 ## Nix and NixOS
 
+Current commands while GitHub still defaults to `master`:
+
+```bash
+nix run github:xnixjoyer/Pipes/main
+nix run github:xnixjoyer/Pipes/main -- --help
+nix profile add github:xnixjoyer/Pipes/main
+```
+
+After the repository default branch is changed to `main`, these equivalent
+unqualified commands become valid:
+
 ```bash
 nix run github:xnixjoyer/Pipes
 nix run github:xnixjoyer/Pipes -- --help
@@ -168,9 +185,11 @@ The flake exports `packages.<system>.default`,
 
 ## NixOS Flake integration
 
+Use the explicit branch during the transition:
+
 ```nix
 {
-  inputs.pipes.url = "github:xnixjoyer/Pipes";
+  inputs.pipes.url = "github:xnixjoyer/Pipes/main";
 
   outputs = { self, nixpkgs, pipes, ... }: {
     nixosConfigurations.example = nixpkgs.lib.nixosSystem {
@@ -186,6 +205,9 @@ The flake exports `packages.<system>.default`,
   };
 }
 ```
+
+After the default-branch switch, `github:xnixjoyer/Pipes` may replace the
+explicit `/main` reference.
 
 ## Development shell
 
@@ -222,10 +244,10 @@ not `replaces`, so replacement of an existing original package is never silent.
 
 ## Fedora
 
-The RPM spec is at `packaging/fedora/pipes-sh-python.spec`. The exact commands
-used for the accepted build are recorded in `ai-context/TESTING.md`; do not
-interpret the presence of the spec alone as proof that a Fedora build passed.
-The package provides `pipes.sh` and conflicts with `pipes-sh`.
+The RPM spec is at `packaging/fedora/pipes-sh-python.spec`. Fedora 44 CI built,
+inspected, installed, imported, and self-tested the RPM successfully. Exact run
+IDs and commands are recorded in `ai-context/TESTING.md`. The package provides
+`pipes.sh` and conflicts with `pipes-sh`.
 
 ## Filesystem behavior
 
@@ -244,8 +266,13 @@ other version declarations against it.
 
 The historical source is commit
 `581792d4e0ea51e15889ba14a85db1bc9727b83d` on `master`. The protected rollback
-branch is `backup/master-before-python-rewrite-20260721`. The rewrite was
-prepared on `rewrite/python-single-file` and targets `main` by pull request.
+branch is `backup/master-before-python-rewrite-20260721`, and the annotated
+rollback tag is `pre-python-master-20260721`.
+
+PR #1 merged the rewrite into `main` as
+`41b3cb359bf0cb46587e4f8326509833bf6037f9`. PR #2 then revalidated the merged
+Main tree and added the post-merge hand-off as
+`2fad92a831ef167b38a77124f10723b31d027a8f`.
 
 Rollback is non-destructive:
 
@@ -253,8 +280,10 @@ Rollback is non-destructive:
 git switch -c restore-historical backup/master-before-python-rewrite-20260721
 ```
 
-Do not delete `master`, the backup branch, or the pre-rewrite tag until `main`,
-its CI, and remote package installation have all been independently verified.
+The remaining administration step is **Settings → General → Default branch →
+`main`**. Do not delete `master`, the backup branch, or the tag. The temporary
+rewrite and validation branches may be deleted only after the default switch
+and unqualified remote Nix checks are confirmed.
 
 ## Testing
 
@@ -266,10 +295,12 @@ python3 -O pipes_sh.py --self-test
 python3 scripts/benchmark.py
 ```
 
-Tests cover pure model logic, CLI validation, all edge directions, deterministic
-randomness, multiple pipes, resets, resize safety, style regeneration, signal
-exit status, terminal cleanup idempotence, subprocess smoke tests, and PTY
-startup/exit. Exact executed commands and limitations are maintained in
+The complete 30-test CI suite covers pure model logic, CLI validation, all edge
+directions, deterministic randomness, multiple pipes, exact reset ordering,
+resize safety, style regeneration, signal exit status, normal and signal PTY
+exits, Echo disabling, and complete termios restoration. Wheel, exact-commit
+Nix build/run/profile installation, unprivileged Arch packaging, and Fedora RPM
+packaging also passed. Exact commands, run IDs, and corrected failures are in
 [`ai-context/TESTING.md`](ai-context/TESTING.md).
 
 ## Supported environments

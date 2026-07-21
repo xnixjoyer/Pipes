@@ -20,7 +20,7 @@ required external verification, `[ ]` not completed.
 - [x] Pure CLI/model functions and deterministic engine.
 - [x] Terminfo capabilities, direct buffered renderer, terminal session cleanup.
 - [x] Immediate bold/color toggles and documented legacy corrections.
-- [x] Unit/model/self/PTY test sources, including exact termios restoration.
+- [x] Unit/model/self/PTY tests, including exact termios restoration.
 - [x] README, manpage, and canonical AI context.
 
 ## Packaging
@@ -36,14 +36,19 @@ required external verification, `[ ]` not completed.
 ## GitHub integration
 
 - [x] Push all verified files to `rewrite/python-single-file`.
-- [x] Open PR #1 to `main` with test and rollback report.
-- [x] Successful final-head Python, PTY, Wheel, Nix, Arch, and Fedora CI:
-  Nix run `29859100015`; cross-distribution run `29859100058`.
-- [x] Mark PR #1 ready and squash-merge it.
-- [x] Confirm merged `main` SHA
+- [x] Open, validate, and squash-merge PR #1 to `main`.
+- [x] Confirm rewrite merge SHA
   `41b3cb359bf0cb46587e4f8326509833bf6037f9`.
-- [~] Validate the merged Main tree again through PR #2 from
-  `validation/main-post-merge`; this PR changes only maintainer status records.
+- [x] Validate the merged Main tree again through PR #2 from
+  `validation/main-post-merge`.
+- [x] Post-merge validation Nix run `29859471948`: success, including exact
+  remote commit build/run and profile installation.
+- [x] Post-merge cross-distribution run `29859471853`: success for Python 3.10,
+  Python 3.13, 30 tests, wheel, Nix gate, unprivileged Arch, and Fedora 44.
+- [x] Squash-merge PR #2 as
+  `2fad92a831ef167b38a77124f10723b31d027a8f`.
+- [x] Update README and canonical status records so remote examples explicitly
+  target `/main` during the default-branch transition.
 - [ ] Change the repository default branch from `master` to `main` in GitHub
   Settings. The connected GitHub tool exposes no repository-default-branch
   mutation, so this remains a manual administration step.
@@ -52,7 +57,31 @@ required external verification, `[ ]` not completed.
 - [ ] Mark `rewrite/python-single-file` and `validation/main-post-merge`
   deletable after default-branch verification; do not delete them automatically.
 
-## Current branch retention
+## Current acceptance boundary
+
+The implementation, tests, packaging, license preservation, explicit-`main`
+remote references, and maintainer context are complete on `main`. The project is
+not yet allowed to claim that its GitHub migration is fully complete because the
+repository setting still names `master` as the default branch.
+
+Until that setting changes:
+
+- use `github:xnixjoyer/Pipes/main` for Nix remote references;
+- do not use unqualified `github:xnixjoyer/Pipes` as proof of the Python rewrite;
+- do not delete `master`, the backup branch, or the annotated rollback tag.
+
+After an administrator selects `main` under **Settings → General → Default
+branch**, run and record:
+
+```bash
+nix flake metadata github:xnixjoyer/Pipes
+nix build github:xnixjoyer/Pipes#default
+nix run github:xnixjoyer/Pipes#default -- --self-test
+nix profile add github:xnixjoyer/Pipes#default
+"$HOME/.nix-profile/bin/pipes.sh" --self-test
+```
+
+## Branch retention
 
 Keep:
 
@@ -62,8 +91,8 @@ Keep:
 - annotated tag `pre-python-master-20260721`
 
 Temporary branches may be deleted only after the GitHub default branch is
-confirmed as `main`, main validation is green, and unqualified remote installs
-resolve to the Python rewrite.
+confirmed as `main`, Main validation remains green, and unqualified remote
+installs resolve to the Python rewrite.
 
 ## Failure handling
 

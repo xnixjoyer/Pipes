@@ -44,13 +44,11 @@ the complete 30-test suite on Python 3.10 and 3.13.
 Python emitted `pty.fork`/`os.fork` deprecation warnings under Python 3.13
 because the host process is multi-threaded; they did not affect the results.
 
-## Successful GitHub Actions acceptance
+## PR #1 acceptance before merge
 
-### Final PR #1 head
+Final PR #1 head: `408b56006710f6ceec785aa1fcfba7d152fcc262`
 
-Commit: `408b56006710f6ceec785aa1fcfba7d152fcc262`
-
-Nix run `29859100015`:
+### Nix run `29859100015`
 
 - lock metadata without rewriting
 - Nix formatting
@@ -64,7 +62,7 @@ Nix run `29859100015`:
 
 Conclusion: success.
 
-Cross-distribution run `29859100058`:
+### Cross-distribution run `29859100058`
 
 - Python 3.10: Ruff, compileall, complete 30-test suite,
   normal/optimized self-test, wheel build/content inspection, isolated install,
@@ -78,22 +76,53 @@ Cross-distribution run `29859100058`:
 
 Conclusion: success for every job.
 
-### Merge result
-
 PR #1 was squash-merged into `main` as
-`41b3cb359bf0cb46587e4f8326509833bf6037f9`. The Main tree was directly checked
-through GitHub after the merge:
+`41b3cb359bf0cb46587e4f8326509833bf6037f9`.
 
-- `pipes_sh.py` exists on `main`, reports version 2.0.0, and contains the SPDX
-  MIT identifier plus all historical author notices.
-- `LICENSE` on `main` retains historical blob SHA
-  `51bcb06d84329959bf250dfddac82c7c0da772e4`.
-- The annotated tag and backup branch remain tied to historical SHA
+## Post-merge Main validation through PR #2
+
+Validation head: `a5aa0262703cbe4e9af5e7e230d05ace1a1458bc`, based directly on
+merged Main SHA `41b3cb359bf0cb46587e4f8326509833bf6037f9` and changing only
+`ai-context/MIGRATION_PLAN.md` and `ai-context/TESTING.md`.
+
+### Nix run `29859471948`
+
+- lock metadata and formatting: success
+- `nix flake check`: success
+- package build and installed command smoke tests: success
+- local `nix run`: success
+- exact validation-commit remote build/run: success
+- exact validation-commit profile installation and self-test: success
+
+### Cross-distribution run `29859471853`
+
+- Python 3.10 full 30-test/wheel/install matrix: success
+- Python 3.13 full 30-test/wheel/install matrix: success
+- Nix gate: success
+- unprivileged Arch build, content inspection, install, command, version,
+  self-test, and import: success
+- Fedora 44 RPM build, content inspection, install, command, version, self-test,
+  and import: success
+
+PR #2 was squash-merged into `main` as
+`2fad92a831ef167b38a77124f10723b31d027a8f`.
+
+The final documentation commit after PR #2 changes only README and these status
+records. It does not alter runtime, tests, workflows, packaging, lock files, or
+license content.
+
+## Direct Main-tree verification
+
+After the rewrite merge, GitHub was queried directly at `ref=main`:
+
+- `pipes_sh.py` exists and declares `VERSION = "2.0.0"`.
+- Its header contains `SPDX-License-Identifier: MIT`, all historical copyright
+  notices, the separate 2026 rewrite notice, and the unofficial-rewrite label.
+- `LICENSE` retains blob SHA `51bcb06d84329959bf250dfddac82c7c0da772e4`
+  and the historical MIT notices.
+- PR #1 and PR #2 are merged.
+- Backup branch and annotated tag remain tied to historical SHA
   `581792d4e0ea51e15889ba14a85db1bc9727b83d`.
-
-A post-merge validation PR from `validation/main-post-merge` reruns the full CI
-against the merged tree while changing only these status/context records. Record
-its PR number, head SHA, and successful run IDs below when complete.
 
 ## Failure history and fixes
 
@@ -101,12 +130,15 @@ its PR number, head SHA, and successful run IDs below when complete.
   `%autosetup -n Pipes-%{version}` and verified by later successful Fedora jobs.
 - The one-time assembly workflow initially committed generated `__pycache__`
   files; they were removed atomically, `.gitignore` was expanded while retaining
-  the historical `pipes.sh.6.html` rule, and final branch comparisons contained
-  no generated cache/build artifacts.
+  the historical `pipes.sh.6.html` rule, and final comparisons contained no
+  generated cache/build artifacts.
 - An early PTY signal test could signal before handlers were installed; it was
   changed to wait for visible terminal initialization before sending signals.
 - The benchmark initially had an import-path issue; it now inserts the project
   root before importing `pipes_sh`.
+- The first reset implementation exposed a multi-pipe ordering ambiguity; frame
+  results now carry exact `clear_after` boundaries, and renderer ordering is
+  regression-tested, including multiple resets inside one frame.
 
 ## Security and repository checks
 
@@ -117,7 +149,7 @@ its PR number, head SHA, and successful run IDs below when complete.
   `581792d4e0ea51e15889ba14a85db1bc9727b83d`.
 - Tag `pre-python-master-20260721` was verified as an annotated tag by its
   one-time workflow and commit-identical to historical `master`.
-- Branch comparison contains no generated cache/build artifacts.
+- Branch comparisons contain no generated cache/build artifacts.
 
 ## Local tool limitations
 
@@ -140,6 +172,15 @@ GitHub Actions jobs above, not presented as local runs.
 
 The repository default branch is still `master`. Until an administrator changes
 it to `main`, unqualified references such as `github:xnixjoyer/Pipes` resolve to
-the historical Bash tree rather than the Python flake. Do not claim default-
-branch remote installation is complete before that setting is changed and the
-unqualified Nix build/run/profile tests pass.
+the historical Bash tree rather than the Python flake.
+
+Current verified remote form:
+
+```text
+github:xnixjoyer/Pipes/main
+```
+
+After selecting `main` under **Settings → General → Default branch**, execute
+and append the results of the unqualified metadata/build/run/profile commands
+listed in `MIGRATION_PLAN.md`. Do not mark the default-branch migration complete
+before those commands pass.
