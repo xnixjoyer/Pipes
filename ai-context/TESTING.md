@@ -13,7 +13,7 @@ configuration. Update it after every meaningful run.
 - `rpmbuild`: unavailable
 - Python `build` module: unavailable
 
-## Executed successfully
+## Executed successfully locally
 
 ```bash
 python3 -m py_compile pipes_sh.py
@@ -21,6 +21,7 @@ python3 pipes_sh.py --version
 python3 pipes_sh.py --help
 python3 pipes_sh.py --self-test
 python3 -m unittest discover -s tests -v
+python3 -O pipes_sh.py --self-test
 ```
 
 Results:
@@ -39,40 +40,60 @@ Results:
 - Python emitted `pty.fork`/`os.fork` deprecation warnings under Python 3.13
   because the host process is multi-threaded; they did not affect the result
 
-The test suite itself also executed and passed:
+## Successful GitHub Actions acceptance
 
-```bash
-python3 -O pipes_sh.py --self-test
-```
+Executable/package head: `155e311fa38791f033984ef622b1ef7902c4c1ec`
 
-through the integration test subprocess.
+### Nix run `29858938719`
 
-## GitHub Actions results
+- lock metadata without rewriting
+- Nix formatting
+- `nix flake check`
+- package build
+- installed help, version, and self-test
+- local `nix run`
+- exact-commit remote build
+- exact-commit remote run
+- exact-commit profile installation and installed self-test
 
-Successful on head `6297c16ab96cd6cc8a984f6097cf97270b4a9178` before the
-non-functional cache cleanup and termios-test addition:
+Conclusion: success.
 
-- Python 3.10 and 3.13: Ruff, compileall, 29 tests, normal/optimized self-test,
-  wheel build/content inspection, isolated install, command, version, import
-- Nix: formatting, flake check, build, local run, exact-commit remote build/run,
-  and profile installation
-- Arch: unprivileged `makepkg`, content inspection, installation, command,
-  version, self-test, import
+### Cross-distribution run `29858938850`
+
+- Python 3.10: Ruff, compileall, 30 tests, normal/optimized self-test, wheel
+  build/content inspection, isolated install, command, version, import
+- Python 3.13: same acceptance matrix
+- Nix gate: flake check
+- Arch: unprivileged `makepkg`, package content inspection, installation,
+  command, version, self-test, import
 - Fedora 44: RPM build, content inspection, installation, command, version,
   self-test, import
 
-The final head must rerun these checks after the 30th termios restoration test.
+Conclusion: success for every job.
 
-## Not available in the local environment
+An earlier Fedora run exposed a missing `%prep`; the spec was corrected with
+`%autosetup`, and the successful run above verifies the fix. Generated
+`__pycache__` files from the one-time assembly were removed and ignored before
+this acceptance run.
 
-- Native local Wheel build tooling
-- Native local Nix
-- Native local Arch `makepkg`
-- Native local Fedora `rpmbuild`
+## Security and repository checks
 
-These were exercised in GitHub Actions rather than falsely claimed as local.
+- Runtime has no `subprocess`, shell, network, plugin, pickle/marshal, FFI,
+  `eval`, `exec`, or persistent-write path.
+- `LICENSE` remained unchanged.
+- Backup branch and annotated tag resolve to historical SHA
+  `581792d4e0ea51e15889ba14a85db1bc9727b83d`.
+- Tag `pre-python-master-20260721` was verified as an annotated tag by its
+  one-time workflow and commit-identical to historical `master`.
+- Branch comparison contains no generated cache/build artifacts.
 
-## Model/fuzz coverage currently represented
+## Local tool limitations
+
+Native local Wheel, Nix, Arch, and Fedora tooling was unavailable in the local
+execution container. Those results are therefore recorded only from the actual
+GitHub Actions jobs above, not presented as local runs.
+
+## Model/fuzz coverage
 
 - Seeds 0..9 in long runs
 - 1, 2, 8, and 32 pipes across tests/self-test
@@ -83,32 +104,5 @@ These were exercised in GitHub Actions rather than falsely claimed as local.
 - Deterministic initialization and frames
 - Valid direction, position, type, and color bounds after each modeled step
 
-## Required CI acceptance commands
-
-Python/wheel:
-
-```bash
-ruff check .
-python -m compileall -q pipes_sh.py tests
-python -m unittest discover -s tests -v
-python pipes_sh.py --self-test
-python -O pipes_sh.py --self-test
-python -m build --wheel --no-isolation
-```
-
-Nix:
-
-```bash
-nix flake metadata --no-write-lock-file .
-git diff --exit-code -- flake.lock
-nix develop --command nixfmt --check flake.nix nix/package.nix
-nix flake check --no-write-lock-file --print-build-logs
-nix build .#default --no-write-lock-file
-./result/bin/pipes.sh --help
-./result/bin/pipes.sh --version
-./result/bin/pipes.sh --self-test
-nix run .#default --no-write-lock-file -- --self-test
-```
-
-Arch and Fedora exact commands are encoded in `.github/workflows/cross-distro.yml`.
-Record the final-head run IDs and conclusions here after they complete.
+The status-only documentation commit following these runs changes no executable
+or packaging input. Its own branch workflows must still be green before merge.
